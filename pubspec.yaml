@@ -1,0 +1,15 @@
+name: dslink_dgapi
+version: 0.0.1
+description: A sample command-line application.
+#author: <your name> <email@example.com>
+#homepage: https://www.example.com
+environment:
+  sdk: '>=1.0.0 <2.0.0'
+dependencies:
+  crypto: any
+  dslink:
+    path: ../sdk-dslink-dart
+#    git: git://github.com/IOT-DSA/sdk-dslink-dart.git
+    
+dev_dependencies:
+  unittest: any
