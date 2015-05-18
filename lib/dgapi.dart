@@ -2,6 +2,7 @@ library dglux.dgapi;
 
 import "dart:io";
 import "dart:convert";
+import "dart:math" as Math;
 import "package:crypto/crypto.dart";
 
 import 'dart:async';

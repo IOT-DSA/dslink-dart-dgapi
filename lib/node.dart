@@ -1,9 +1,9 @@
 part of dglux.dgapi;
 
-class OldApiNode extends SimpleNode implements IDGDataWatcher{
+class DgApiNode extends SimpleNode{
   DgApiNodeProvider provider;
   
-  OldApiNode(String path, this.provider) : super(path) {
+  DgApiNode(String path, this.provider) : super(path) {
   }
   
   bool watching = false;
@@ -43,29 +43,39 @@ class OldApiNode extends SimpleNode implements IDGDataWatcher{
       response.close(new DSError('serverError'));
     }
     if (actName == 'getHistory') {
-      provider.service.getHistory((Map table) {
-//        List rows = table.rows.map((List row)=>row.sublist(1)).toList();
-//        List cols = table.columns.sublist(1).map((col)=>{'name':col.name, 'type':col.type}).toList();
-//        response.updateStream(rows, columns:cols, streamStatus: StreamStatus.closed);
-      }, 'slot:${paths.join("/")}', params['Timerange'], params['Interval'], params['Rollup'], onError:onError);
+      provider.service.getHistory((Map rslt) {
+        if (rslt['columns'] is List && rslt['rows'] is List) {
+          List rows = rslt['rows'];
+          List cols = rslt['columns'];
+          response.updateStream(rows, columns:cols, streamStatus: StreamStatus.closed);
+        } else {
+          onError(rslt['error']);
+        }
+      }, 'slot:${paths.join("/")}', params['Timerange'], params['Interval'], params['Rollup']);
     } else {
       provider.service.invoke((Map rslt){
-       List row = [];
-       List col = [];
-       rslt.forEach((k,v) {
-         if (v is String || k == null) {
-           col.add({'name':k, 'type':'string'});
-         } else if (v is num) {
-           col.add({'name':k, 'type':'number'});
-         } else if (v is bool) {
-           col.add({'name':k, 'type':'bool'});
-         } else{
-           return;
-         }
-         row.add(v);
-       });
-       response.updateStream(row, columns:col, streamStatus: StreamStatus.closed);
-     }, actName, 'slot:${paths.join("/")}',  params, onError:onError);
+       if (rslt['results'] is Map) {
+         Map results = rslt['results'];
+         List row = [];
+         List col = [];
+         results.forEach((k,v) {
+           if (v is String || k == null) {
+             col.add({'name':k, 'type':'string'});
+           } else if (v is num) {
+             col.add({'name':k, 'type':'number'});
+           } else if (v is bool) {
+             col.add({'name':k, 'type':'bool'});
+           } else{
+             return;
+           }
+           row.add(v);
+         });
+         response.updateStream(row, columns:col, streamStatus: StreamStatus.closed);
+       } else {
+         onError(rslt['error']);
+       }
+
+     }, actName, 'slot:${paths.join("/")}',  params);
     }
 
     return response;
@@ -104,29 +114,31 @@ class OldApiNode extends SimpleNode implements IDGDataWatcher{
     
     _nodeReady = false;
     _childrenReady = false;
-    provider.service.getNode(getNodeCallback, 'slot:$path' ,onError:getNodeError);
-    provider.service.getChildren(getChildrenCallback, 'slot:$path' ,onError:getChildrenError);
+    provider.service.getNode(getNodeCallback, 'slot:$path');
+    provider.service.getChildren(getChildrenCallback, 'slot:$path');
   }
   bool _nodeReady;
-  DGDataNode node;
-  void getNodeCallback(DGDataNode node) {
-    this.node = node;
+  Map node;
+  void getNodeCallback(Map rslt) {
+    if (rslt['node'] is Map) {
+      node = rslt['node'];
+    } else {
+      node = null;
+    }
     _nodeReady = true;
     if (_childrenReady) {
       listFinished();
     }
   }
-  void getNodeError(String str) {
-    node = null;
-    _nodeReady = true;
-    if (_childrenReady) {
-      listFinished();
-    }
-  }
+
   bool _childrenReady;
   List childrenNodes;
-  void getChildrenCallback(List<DGDataNode> nodes) {
-    this.childrenNodes = nodes;
+  void getChildrenCallback(Map rslt) {
+    if (rslt['nodes'] is List) {
+      childrenNodes = rslt['nodes'];
+    } else {
+      childrenNodes = null;
+    }
     _childrenReady = true;
     if (_nodeReady) {
       listFinished();
@@ -144,31 +156,31 @@ class OldApiNode extends SimpleNode implements IDGDataWatcher{
       // node error? check if this is a action node from parent
       List paths = 'slot:$path'.split('/');
       checkActionName = paths.removeLast();
-      provider.service.getNode(getParentNodeCallback, paths.join('/') ,onError:getParentNodeError);
+      provider.service.getNode(getParentNodeCallback, paths.join('/') );
       return;
     }
     listReady = true;
     configs[r'$is'] = 'node';
-    if (node.type != null) {
-      configs[r'$type'] = node.type;
+    if (node['type'] is String) {
+      configs[r'$type'] = node['type'];
     }
-    if (node.enums != null) {
-      configs[r'$type'] = 'enum[${node.enums}]';
+    if (node['enum'] is String) {
+      configs[r'$type'] = 'enum[${node['enum']}]';
     }
-    if (node.unit != null) {
-      attributes['@unit'] = node.unit;
+    if (node['unit'] is String) {
+      attributes['@unit'] = node['unit'];
     }
-    if (node.actions != null) {
-      for (DGDataAction action in node.actions) {
-        children[action.name] = new SimpleActionNode(action);
+    if (node['actions'] is List) {
+      for (Map action in node['actions']) {
+        children[action['name']] = new SimpleActionNode(action);
       }
     }
     if (childrenNodes != null) {
-      for (DGDataNode n in childrenNodes) {
-        children[n.path.split('/').last] = new SimpleChildNode(n);
+      for (Map n in childrenNodes) {
+        children[(n['path'] as String).split('/').last] = new SimpleChildNode(n);
       }
     }
-    if (node.hasHistory) {
+    if (node['hasHistory'] == true) {
       children['getHistory'] = _getHistoryNode;
     }
     // update is to refresh all;
@@ -176,52 +188,50 @@ class OldApiNode extends SimpleNode implements IDGDataWatcher{
   }
   
   String checkActionName;
-  void getParentNodeCallback(DGDataNode node) {
-    if (checkActionName == 'getHistory') {
-      if (node.hasHistory) {
-        listReady = true;
-        configs.addAll(_getHistoryNode.configs);
+  void getParentNodeCallback(Map rslt) {
+    if (rslt['node'] is Map) {
+      Map pnode = rslt['node'];
+      if (checkActionName == 'getHistory') {
+         if (pnode['hasHistory'] == true) {
+           listReady = true;
+           configs.addAll(_getHistoryNode.configs);
+         }
+      } else if (pnode['actions'] is List) {
+         Map action = pnode['actions'].firstWhere((action)=>action['name'] == checkActionName, orElse:()=>null);
+         if (action != null) {
+           listReady = true;
+           SimpleActionNode actionNode = new SimpleActionNode(action);
+           configs.addAll(actionNode.configs);
+         }
       }
-    } else if (node.actions != null) {
-      DGDataAction action = node.actions.firstWhere((action)=>action.name == checkActionName, orElse:()=>null);
-      if (action != null) {
-        listReady = true;
-        SimpleActionNode actionNode = new SimpleActionNode(action);
-        configs.addAll(actionNode.configs);
-      }
+      listChangeController.add(r'$is');      
+    } else {
+      configs[r'$disconnectedTs'] = ValueUpdate.getTs();
+      listChangeController.add(r'$disconnectedTs');
+      listReady = true;
     }
-    listChangeController.add(r'$is');
-  }
-  void getParentNodeError(String str) {
-    configs[r'$disconnectedTs'] = ValueUpdate.getTs();
-    listChangeController.add(r'$disconnectedTs');
-    listReady = true;
   }
 }
 
 class SimpleActionNode extends SimpleNode {
-  SimpleActionNode(DGDataAction action) : super('/') {
+  SimpleActionNode(Map action) : super('/') {
     configs[r'$is'] = 'node';
     configs[r'$invokable'] = 'read';
-    if (action.params != null) {
+    if (action['parameters'] is List) {
       Map params = {};
-      for (DGDataParam param in action.params) {
-        params[param.name] = {'type':param.type};
-        if (param.enums != null) {
-          params[param.name] = {'type':'enum[${param.enums.join(',')}]'};
+      for (Map param in action['parameters']) {
+        params[param['name']] = {'type':param['type']};
+        if (param['enum'] is String) {
+          params[param['name']] = {'type':'enum[${param["enum"]}]'};
         }
       }
       configs[r'$params'] = params;
     }
     
-    if (action.results != null) {
+    if (action['results'] is List) {
       List columns = [];
-      for (DGDataParam param in action.params) {
-        if (param.enums != null) {
-          columns.add({'name':param.name, 'type':'enum[${param.enums.join(',')}]'});
-        } else {
-          columns.add({'name':param.name, 'type':param.type});
-        }
+      for (Map param in action['results']) {
+          columns.add({'name':param['name'], 'type':param['type']});
       }
       configs[r'$columns'] = columns;
     }
@@ -229,16 +239,16 @@ class SimpleActionNode extends SimpleNode {
 }
 
 class SimpleChildNode extends SimpleNode {
-  SimpleChildNode(DGDataNode node) : super('/') {
+  SimpleChildNode(Map node) : super('/') {
     configs[r'$is'] = 'node';
-    if (node.type != null) {
-      configs[r'$type'] = node.type;
+    if (node['type'] is String) {
+      configs[r'$type'] = node['type'];
     }
-    if (node.enums != null) {
-      configs[r'$type'] = 'enum[${node.enums}]';
+    if (node['enum'] is String) {
+      configs[r'$type'] = 'enum[${node['enum']}]';
     }
-    if (node.unit != null) {
-      attributes['@unit'] = node.unit;
+    if (node['unit'] is String) {
+      attributes['@unit'] = node['unit'];
     }
   }
 }

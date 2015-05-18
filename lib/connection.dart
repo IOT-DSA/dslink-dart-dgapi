@@ -2,9 +2,7 @@ part of dglux.dgapi;
 
 abstract class IOldApiConnection{
   Future<bool> login();
-  /// modify the request
-  void modifyRequest(Uri uri, HttpClientRequest);
-
+  Future<String> loadString(Uri uri, [String post]);
   DGDataService get service;
 }
 
@@ -25,16 +23,29 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     authString = CryptoUtils.bytesToBase64(UTF8.encode('$username:$password'));
   }
 
-  loadString(Uri uri) async {
+  Future<String> loadString(Uri uri, [String post]) async {
     HttpClient loader = new HttpClient();
-    HttpClientRequest req = await loader.getUrl(uri);
+    HttpClientRequest req;
+    if (post != null) {
+      req = await loader.postUrl(uri);
+    } else {
+      req = await loader.getUrl(uri);
+    }
     authRequest(req);
+    if (post != null) {
+      req.add(UTF8.encode(post));
+    }
     HttpClientResponse resp = await req.close();
     addCookie(resp.headers.value('set-cookie'));
     List configBytes = await resp.fold([], foldList);
     return UTF8.decode(configBytes);
   }
-
+  void authRequest(HttpClientRequest req) {
+    req.headers.add('Authorization', 'Basic ZGdTdXBlcjpkZ2x1eDEyMzQ=');
+    if (serverCookie != null) {
+      req.headers.add('cookie', serverCookie);
+    }
+  }
   String serverCookie;
   void addCookie(String cookie){
     if (cookie != null) {
@@ -56,21 +67,8 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     } else {
       service = new DGDataService(serverUrl,
       serverUri.resolve(config['dataUrl']).toString(),
-      serverUri.resolve(config['dbUrl']).toString());
+      serverUri.resolve(config['dbUrl']).toString(), this);
     }
     return true;
-  }
-
-  void authRequest(HttpClientRequest req) {
-    req.headers.add('Authorization', 'Basic ZGdTdXBlcjpkZ2x1eDEyMzQ=');
-    if (serverCookie != null) {
-      req.headers.add('cookie', serverCookie);
-    }
-  }
-
-  void modifyRequest(Uri uri, HttpClientRequest req) {
-    if (uri.host == serverUri.host && uri.port == serverUri.port) {
-      authRequest(req);
-    }
   }
 }
