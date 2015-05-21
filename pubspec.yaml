@@ -8,8 +8,7 @@ environment:
 dependencies:
   crypto: any
   dslink:
-    path: ../sdk-dslink-dart
-#    git: git://github.com/IOT-DSA/sdk-dslink-dart.git
+    git: git://github.com/IOT-DSA/sdk-dslink-dart.git
     
 dev_dependencies:
   unittest: any
