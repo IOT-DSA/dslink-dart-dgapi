@@ -78,7 +78,7 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
     };
 
     for (var x in services.keys) {
-      var c = nodes["/${x}"].configs;
+      var c = nodes["/"].children[x].configs;
       m[x] = {
         r"$$dgapi_url": c[r"$$dgapi_url"],
         r"$$dgapi_username": c[r"$$dgapi_username"],
