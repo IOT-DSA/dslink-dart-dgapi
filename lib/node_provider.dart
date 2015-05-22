@@ -68,7 +68,7 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
     }
   }
 
-  int ll = -1;
+  int ll = 0;
   int nx = -1;
 
   @override
