@@ -16,8 +16,11 @@ main(List<String> args) async {
   link = new LinkProvider(args, 'dgapi-', nodeProvider: provider, isResponder: true);
   link.init();
 
+  int count = 0;
+
   while (true) {
-    if (provider.nx == 0 || (provider.nx != -1 && provider.ll == provider.nx)) {
+    count++;
+    if (provider.nx == 0 || count == 500 || (provider.nx != -1 && provider.ll == provider.nx)) {
       link.connect();
       break;
     } else {
