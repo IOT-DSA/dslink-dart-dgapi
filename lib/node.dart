@@ -1,27 +1,29 @@
 part of dglux.dgapi;
 
-class DgApiNode extends SimpleNode{
+class DgApiNode extends SimpleNode {
+  final String conn;
   DgApiNodeProvider provider;
-  
-  DgApiNode(String path, this.provider) : super(path) {
-  }
-  
+
+  String rpath;
+
+  DgApiNode(this.conn, String path, this.provider) : super(path);
+
   bool watching = false;
   bool valueReady = false;
-  
+
   RespSubscribeListener subscribe(callback(ValueUpdate), [int cachelevel = 1]){
     if (!watching) {
-      provider.registerNode(this);
-      provider.service.addWatch(updateDataValue, 'slot:$path');
+      provider.registerNode(conn, this);
+      provider.services[conn].addWatch(updateDataValue, 'slot:$rpath');
       watching = true;
     }
     return super.subscribe(callback, cachelevel);
   }
-  
+
   void unsubscribe(callback(ValueUpdate)) {
     super.unsubscribe(callback);
     if (watching && callbacks.isEmpty) {
-      provider.service.removeWatch(updateDataValue, 'slot:$path');
+      provider.services[conn].removeWatch(updateDataValue, 'slot:$rpath');
       watching = false;
       if (!_listing) {
         provider.unregisterNode(this);
@@ -29,21 +31,21 @@ class DgApiNode extends SimpleNode{
       valueReady = false;
     }
   }
-  
+
   updateDataValue(Map m) {
     updateValue(new ValueUpdate(m['value'], ts:m['lastUpdate']));
     valueReady = true;
   }
-  
+
   InvokeResponse invoke(Map params, Responder responder, InvokeResponse response) {
-    List paths = path.split('/');
+    List paths = rpath.split('/');
     String actName = paths.removeLast();
     void onError(String str) {
-      // TODO: implement error 
+      // TODO: implement error
       response.close(new DSError('serverError'));
     }
     if (actName == 'getHistory') {
-      provider.service.getHistory((Map rslt) {
+      provider.services[conn].getHistory((Map rslt) {
         if (rslt['columns'] is List && rslt['rows'] is List) {
           List rows = rslt['rows'];
           List cols = rslt['columns'];
@@ -53,7 +55,7 @@ class DgApiNode extends SimpleNode{
         }
       }, 'slot:${paths.join("/")}', params['Timerange'], params['Interval'], params['Rollup']);
     } else {
-      provider.service.invoke((Map rslt){
+      provider.services[conn].invoke((Map rslt){
        if (rslt['results'] is Map) {
          Map results = rslt['results'];
          List row = [];
@@ -80,7 +82,7 @@ class DgApiNode extends SimpleNode{
 
     return response;
   }
-  
+
   BroadcastStreamController<String> _listChangeController;
   BroadcastStreamController<String> get listChangeController {
     if (_listChangeController == null) {
@@ -97,8 +99,8 @@ class DgApiNode extends SimpleNode{
   void _onStartListListen() {
     _listing = true;
     listNode();
-    
-    provider.registerNode(this);
+
+    provider.registerNode(conn, this);
   }
 
   void _onAllListCancel() {
@@ -108,14 +110,14 @@ class DgApiNode extends SimpleNode{
     }
     listReady = false;
   }
- 
+
   void listNode(){
     if (!_listing) return;
-    
+
     _nodeReady = false;
     _childrenReady = false;
-    provider.service.getNode(getNodeCallback, 'slot:$path');
-    provider.service.getChildren(getChildrenCallback, 'slot:$path');
+    provider.services[conn].getNode(getNodeCallback, 'slot:$rpath');
+    provider.services[conn].getChildren(getChildrenCallback, 'slot:$rpath');
   }
   bool _nodeReady;
   Map node;
@@ -154,9 +156,9 @@ class DgApiNode extends SimpleNode{
   void listFinished() {
     if (node == null) {
       // node error? check if this is a action node from parent
-      List paths = 'slot:$path'.split('/');
+      List paths = 'slot:$rpath'.split('/');
       checkActionName = paths.removeLast();
-      provider.service.getNode(getParentNodeCallback, paths.join('/') );
+      provider.services[conn].getNode(getParentNodeCallback, paths.join('/') );
       return;
     }
     listReady = true;
@@ -186,7 +188,7 @@ class DgApiNode extends SimpleNode{
     // update is to refresh all;
     listChangeController.add(r'$is');
   }
-  
+
   String checkActionName;
   void getParentNodeCallback(Map rslt) {
     if (rslt['node'] is Map) {
@@ -204,7 +206,7 @@ class DgApiNode extends SimpleNode{
            configs.addAll(actionNode.configs);
          }
       }
-      listChangeController.add(r'$is');      
+      listChangeController.add(r'$is');
     } else {
       configs[r'$disconnectedTs'] = ValueUpdate.getTs();
       listChangeController.add(r'$disconnectedTs');
@@ -227,7 +229,7 @@ class SimpleActionNode extends SimpleNode {
       }
       configs[r'$params'] = params;
     }
-    
+
     if (action['results'] is List) {
       List columns = [];
       for (Map param in action['results']) {

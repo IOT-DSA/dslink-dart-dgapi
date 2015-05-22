@@ -1,15 +1,17 @@
 part of dglux.dgapi;
 
-abstract class IOldApiConnection{
+abstract class IOldApiConnection {
   Future<bool> login();
+
   Future<String> loadString(Uri uri, [String post]);
+
   DGDataService get service;
 }
 
 List foldList(List a, List b) {
-  return a..addAll(b);
+  return a
+    ..addAll(b);
 }
-
 
 class OldApiBaseAuthConnection implements IOldApiConnection {
   final String serverUrl;
@@ -18,6 +20,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
   Uri serverUri;
   String authString;
   DGDataService service;
+
   OldApiBaseAuthConnection(this.serverUrl, this.username, this.password) {
     serverUri = Uri.parse(serverUrl);
     authString = CryptoUtils.bytesToBase64(UTF8.encode('$username:$password'));
@@ -40,16 +43,19 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     List configBytes = await resp.fold([], foldList);
     return UTF8.decode(configBytes);
   }
+
   void authRequest(HttpClientRequest req) {
     req.headers.add('Authorization', 'Basic ZGdTdXBlcjpkZ2x1eDEyMzQ=');
     if (serverCookie != null) {
       req.headers.add('cookie', serverCookie);
     }
   }
+
   String serverCookie;
-  void addCookie(String cookie){
+
+  void addCookie(String cookie) {
     if (cookie != null) {
-      serverCookie = cookie.split(';').where((str)=>!str.contains('path=')).join(';');
+      serverCookie = cookie.split(';').where((str) => !str.contains('path=')).join(';');
     }
   }
 

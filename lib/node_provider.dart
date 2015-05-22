@@ -1,25 +1,34 @@
 part of dglux.dgapi;
 
+class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
+  Map<String, DGDataService> services = {};
 
-class DgApiNodeProvider implements NodeProvider {
-  final DGDataService service;
-  Map<String, DgApiNode> nodes = new Map<String, DgApiNode>();
+  Map<String, LocalNode> nodes = new Map<String, LocalNode>();
 
-  DgApiNodeProvider(this.service);
   LocalNode getNode(String path) {
     if (nodes.containsKey(path)) {
       return nodes[path];
     }
+
     // don't cache in nodes map, it's only for running subscription
     // other nodes are just used once and throw away
-    return new DgApiNode(path, this);
+    var conn = path.split("/").take(2).join("/").substring(1);
+
+    if (!services.containsKey(conn)) {
+      return new SimpleNode(path);
+    }
+
+    var n = new DgApiNode(conn, path, this);
+    n.rpath = n.path.substring("/${conn}".length);
+    return n;
   }
+
   LocalNode operator [](String path) {
     return getNode(path);
   }
-  
+
   /// register node for subscribe or list api
-  void registerNode(DgApiNode node) {
+  void registerNode(String conn, DgApiNode node) {
     if (nodes.containsKey(node.path)) {
       if (nodes[node.path] == node) {
         return;
@@ -28,9 +37,55 @@ class DgApiNodeProvider implements NodeProvider {
     }
     nodes[node.path] = node;
   }
+
   void unregisterNode(DgApiNode node) {
     if (nodes[node.path] == node) {
       nodes.remove(node.path);
     }
+  }
+
+  @override
+  void init([Map m, Map profiles]) {
+    var names = m.keys.where((it) => !it.startsWith(r"$") && it != "Add_Connection").toList();
+    nx = names.length;
+    for (var n in names) {
+      var url = m[n][r"$$dgapi_url"];
+      var username = m[n][r"$$dgapi_username"];
+      var password = m[n][r"$$dgapi_password"];
+      IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password);
+      connection.login().then((_) {
+        services[n] = connection.service;
+        nodes["/"].addChild(n, new SimpleNode("/")..load({
+          r"$$dgapi_url": url,
+          r"$$dgapi_username": username,
+          r"$$dgapi_password": password
+        }, null));
+        ll++;
+      }).catchError((e) {
+        print("Warning: Failed to connect for connection ${n}: ${e}");
+        ll++;
+      });
+    }
+  }
+
+  int ll = -1;
+  int nx = -1;
+
+  @override
+  Map save() {
+    var m = {
+      r"$is": "node"
+    };
+
+    for (var x in services.keys) {
+      var c = nodes["/${x}"].configs;
+      m[x] = {
+        r"$$dgapi_url": c[r"$$dgapi_url"],
+        r"$$dgapi_username": c[r"$$dgapi_username"],
+        r"$$dgapi_password": c[r"$$dgapi_password"]
+      };
+    }
+
+    return m;
   }
 }
