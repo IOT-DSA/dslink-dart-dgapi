@@ -17,7 +17,7 @@ main(List<String> args) async {
   link.init();
 
   while (true) {
-    if (provider.nx != -1 && provider.ll == provider.nx) {
+    if (provider.nx == 0 || (provider.nx != -1 && provider.ll == provider.nx)) {
       link.connect();
       break;
     } else {
