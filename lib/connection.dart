@@ -20,13 +20,14 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
   Uri serverUri;
   String authString;
   DGDataService service;
+  bool basicAuth = true;
 
   OldApiBaseAuthConnection(this.serverUrl, this.username, this.password) {
     serverUri = Uri.parse(serverUrl);
     authString = CryptoUtils.bytesToBase64(UTF8.encode('$username:$password'));
   }
 
-  Future<String> loadString(Uri uri, [String post]) async {
+  Future<String> loadString(Uri uri, [String post, String contentType]) async {
     HttpClient loader = new HttpClient();
     HttpClientRequest req;
     if (post != null) {
@@ -34,10 +35,17 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     } else {
       req = await loader.getUrl(uri);
     }
+
     authRequest(req);
+
+    if (contentType != null) {
+      req.headers.contentType = ContentType.parse(contentType);
+    }
+
     if (post != null) {
       req.add(UTF8.encode(post));
     }
+
     HttpClientResponse resp = await req.close();
     addCookie(resp.headers.value('set-cookie'));
     List configBytes = await resp.fold([], foldList);
@@ -45,7 +53,10 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
   }
 
   void authRequest(HttpClientRequest req) {
-    req.headers.add('Authorization', 'Basic ZGdTdXBlcjpkZ2x1eDEyMzQ=');
+    if (basicAuth) {
+      req.headers.add('Authorization', 'Basic ZGdTdXBlcjpkZ2x1eDEyMzQ=');
+    }
+
     if (serverCookie != null) {
       req.headers.add('cookie', serverCookie);
     }
@@ -63,13 +74,24 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     String configStr = await loadString(serverUri.resolve('dgconfig.json'));
     Map config = JSON.decode(configStr);
     String sessionStr = await loadString(serverUri.resolve(config['sessionUrl']));
+    if (sessionStr.contains("DGBox version")) { // This is DGBox
+      basicAuth = false;
+      var result = await loadString(
+          serverUri.resolve("/dglux5-login.htm"),
+          "username=${username}&password=${password}",
+          "application/x-www-form-urlencoded"
+      );
+      if (result.trim().isNotEmpty) {
+        return false;
+      }
+      sessionStr = await loadString(serverUri.resolve(config['sessionUrl']));
+    }
     Map session = JSON.decode(sessionStr);
 
-    if (session['connection'] is String &&
-    session['connection'].contains('async')) {
-//      service = new DGRefApiDataServiceAsync(serverUrl,
-//      serverUri.resolve(config['dataUrl']).toString(),
-//      serverUri.resolve(config['dbUrl']).toString());
+    if (session['connection'] is String && session['connection'].contains('async')) {
+      service = new DGDataServiceAsync(serverUrl,
+      serverUri.resolve(config['dataUrl']).toString(),
+      serverUri.resolve(config['dbUrl']).toString(), this);
     } else {
       service = new DGDataService(serverUrl,
       serverUri.resolve(config['dataUrl']).toString(),

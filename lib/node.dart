@@ -11,10 +11,18 @@ class DgApiNode extends SimpleNode {
   bool watching = false;
   bool valueReady = false;
 
+  String rewritePath(String x) {
+    if (provider.services[conn] is DGDataServiceAsync) {
+      return x;
+    } else {
+      return "slot:${x}";
+    }
+  }
+
   RespSubscribeListener subscribe(callback(ValueUpdate), [int cachelevel = 1]){
     if (!watching) {
       provider.registerNode(conn, this);
-      provider.services[conn].addWatch(updateDataValue, 'slot:$rpath');
+      provider.services[conn].addWatch(updateDataValue, rewritePath(rpath));
       watching = true;
     }
     return super.subscribe(callback, cachelevel);
@@ -23,7 +31,7 @@ class DgApiNode extends SimpleNode {
   void unsubscribe(callback(ValueUpdate)) {
     super.unsubscribe(callback);
     if (watching && callbacks.isEmpty) {
-      provider.services[conn].removeWatch(updateDataValue, 'slot:$rpath');
+      provider.services[conn].removeWatch(updateDataValue, rewritePath(rpath));
       watching = false;
       if (!_listing) {
         provider.unregisterNode(this);
@@ -53,7 +61,7 @@ class DgApiNode extends SimpleNode {
         } else {
           onError(rslt['error']);
         }
-      }, 'slot:${paths.join("/")}', params['Timerange'], params['Interval'], params['Rollup']);
+      }, rewritePath(paths.join("/")), params['Timerange'], params['Interval'], params['Rollup']);
     } else {
       provider.services[conn].invoke((Map rslt){
        if (rslt['results'] is Map) {
@@ -77,7 +85,7 @@ class DgApiNode extends SimpleNode {
          onError(rslt['error']);
        }
 
-     }, actName, 'slot:${paths.join("/")}',  params);
+     }, actName, rewritePath(paths.join("/")),  params);
     }
 
     return response;
@@ -116,8 +124,8 @@ class DgApiNode extends SimpleNode {
 
     _nodeReady = false;
     _childrenReady = false;
-    provider.services[conn].getNode(getNodeCallback, 'slot:$rpath');
-    provider.services[conn].getChildren(getChildrenCallback, 'slot:$rpath');
+    provider.services[conn].getNode(getNodeCallback, rewritePath(rpath));
+    provider.services[conn].getChildren(getChildrenCallback, rewritePath(rpath));
   }
   bool _nodeReady;
   Map node;
@@ -156,9 +164,9 @@ class DgApiNode extends SimpleNode {
   void listFinished() {
     if (node == null) {
       // node error? check if this is a action node from parent
-      List paths = 'slot:$rpath'.split('/');
+      List paths = rewritePath(rpath).split('/');
       checkActionName = paths.removeLast();
-      provider.services[conn].getNode(getParentNodeCallback, paths.join('/') );
+      provider.services[conn].getNode(getParentNodeCallback, paths.join('/'));
       return;
     }
     listReady = true;
