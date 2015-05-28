@@ -54,7 +54,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
   void authRequest(HttpClientRequest req) {
     if (basicAuth) {
-      req.headers.add('Authorization', 'Basic ZGdTdXBlcjpkZ2x1eDEyMzQ=');
+      req.headers.add('Authorization', 'Basic ${authString}');
     }
 
     if (serverCookie != null) {
