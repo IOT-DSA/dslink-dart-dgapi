@@ -60,6 +60,7 @@ class QueryToken {
 }
 
 class DGDataService {
+  bool dgbox = false;
   static Math.Random _rnd = new Math.Random();
   static String subscriptionId = () {
     return 'DG${_rnd.nextInt(999999)}${_rnd.nextInt(999999)}';
@@ -270,7 +271,9 @@ class DGDataService {
 
   QueryToken getChildren(DataCallback callback, String parentPath) {
     Map m = {"method": "GetNodeList", "path": parentPath};
-    var token = new QueryToken(m, callback);
+    var token = new QueryToken(m, (x) {
+      callback(x);
+    });
     sendRequest(token);
     return token;
   }

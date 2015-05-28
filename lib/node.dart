@@ -12,7 +12,11 @@ class DgApiNode extends SimpleNode {
   bool valueReady = false;
 
   String rewritePath(String x) {
-    if (provider.services[conn] is DGDataServiceAsync) {
+    if (provider.services[conn].dgbox) {
+      if (x == "") {
+        x = "/";
+      }
+
       return x;
     } else {
       return "slot:${x}";

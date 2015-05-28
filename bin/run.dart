@@ -13,7 +13,7 @@ main(List<String> args) async {
   SimpleNode root = provider.nodes["/"] = new SimpleNode("/");
   provider.nodes["/Add_Connection"] = new AddConnectionNode("/Add_Connection");
   root.addChild("Add_Connection", provider.nodes["/Add_Connection"]);
-  link = new LinkProvider(args, 'dgapi-', nodeProvider: provider, isResponder: true);
+  link = new LinkProvider(args, 'dgapi-', nodeProvider: provider, isResponder: true, autoInitialize: false);
   link.init();
 
   int count = 0;
@@ -73,4 +73,3 @@ class AddConnectionNode extends SimpleNode {
     return {};
   }
 }
-

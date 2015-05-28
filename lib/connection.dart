@@ -66,7 +66,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
   void addCookie(String cookie) {
     if (cookie != null) {
-      serverCookie = cookie.split(';').where((str) => !str.contains('path=')).join(';');
+      serverCookie = cookie.split(';').where((str) => !str.toLowerCase().contains('path=')).join(';');
     }
   }
 
@@ -85,18 +85,18 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
         return false;
       }
       sessionStr = await loadString(serverUri.resolve(config['sessionUrl']));
+      dgbox = true;
     }
     Map session = JSON.decode(sessionStr);
 
-    if (session['connection'] is String && session['connection'].contains('async')) {
-      service = new DGDataServiceAsync(serverUrl,
-      serverUri.resolve(config['dataUrl']).toString(),
-      serverUri.resolve(config['dbUrl']).toString(), this);
+    if (session['connection'] != null && session['connection'].contains("async")) {
+      service = new DGDataServiceAsync(serverUrl, serverUri.resolve(config['dataUrl']).toString(), serverUri.resolve(config['dbUrl']).toString(), this);
     } else {
-      service = new DGDataService(serverUrl,
-      serverUri.resolve(config['dataUrl']).toString(),
-      serverUri.resolve(config['dbUrl']).toString(), this);
+      service = new DGDataService(serverUrl, serverUri.resolve(config['dataUrl']).toString(), serverUri.resolve(config['dbUrl']).toString(), this);
     }
+    service.dgbox = dgbox;
     return true;
   }
+
+  bool dgbox = false;
 }
