@@ -48,7 +48,7 @@ class QueryToken {
         if (target[s] is Map) {
           target = target[s];
         } else {
-          print('Error, partial result field not fount');
+          print('Error, partial result field not found');
           return partialResponse;
         }
       }
@@ -109,7 +109,6 @@ class DGDataService {
     try {
       return JSON.decode(await connection.loadString(Uri.parse(dbUrl + "?db=${db}&query=${query}")));
     } catch (e) {
-      print(e);
       return {
         "columns": [],
         "rows": []

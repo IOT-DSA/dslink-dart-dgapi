@@ -23,7 +23,7 @@ class DgApiNode extends SimpleNode {
     }
   }
 
-  RespSubscribeListener subscribe(callback(ValueUpdate), [int cachelevel = 1]){
+  RespSubscribeListener subscribe(callback(ValueUpdate), [int cachelevel = 1]) {
     if (!watching) {
       provider.registerNode(conn, this);
       provider.services[conn].addWatch(updateDataValue, rewritePath(rpath));
@@ -52,6 +52,7 @@ class DgApiNode extends SimpleNode {
   InvokeResponse invoke(Map params, Responder responder, InvokeResponse response) {
     List paths = rpath.split('/');
     String actName = paths.removeLast();
+
     void onError(String str) {
       // TODO: implement error
       response.close(new DSError('serverError'));
@@ -68,35 +69,36 @@ class DgApiNode extends SimpleNode {
       }, rewritePath(paths.join("/")), params['Timerange'], params['Interval'], params['Rollup']);
     } else if (actName == 'dbQuery') {
     } else {
-      provider.services[conn].invoke((Map rslt){
-       if (rslt['results'] is Map) {
-         Map results = rslt['results'];
-         List row = [];
-         List col = [];
-         results.forEach((k,v) {
-           if (v is String || k == null) {
-             col.add({'name':k, 'type':'string'});
-           } else if (v is num) {
-             col.add({'name':k, 'type':'number'});
-           } else if (v is bool) {
-             col.add({'name':k, 'type':'bool'});
-           } else{
-             return;
-           }
-           row.add(v);
-         });
-         response.updateStream(row, columns:col, streamStatus: StreamStatus.closed);
-       } else {
-         onError(rslt['error']);
-       }
+      provider.services[conn].invoke((Map rslt) {
+        if (rslt['results'] is Map) {
+          Map results = rslt['results'];
+          List row = [];
+          List col = [];
+          results.forEach((k, v) {
+            if (v is String || k == null) {
+              col.add({'name':k, 'type':'string'});
+            } else if (v is num) {
+              col.add({'name':k, 'type':'number'});
+            } else if (v is bool) {
+              col.add({'name':k, 'type':'bool'});
+            } else {
+              return;
+            }
+            row.add(v);
+          });
+          response.updateStream(row, columns:col, streamStatus: StreamStatus.closed);
+        } else {
+          onError(rslt['error']);
+        }
 
-     }, actName, rewritePath(paths.join("/")),  params);
+      }, actName, rewritePath(paths.join("/")), params);
     }
 
     return response;
   }
 
   BroadcastStreamController<String> _listChangeController;
+
   BroadcastStreamController<String> get listChangeController {
     if (_listChangeController == null) {
       _listChangeController = new BroadcastStreamController<String>(
@@ -104,11 +106,14 @@ class DgApiNode extends SimpleNode {
     }
     return _listChangeController;
   }
+
   Stream<String> get listStream => listChangeController.stream;
+
   StreamSubscription _listReqListener;
 
   bool _listing = false;
   bool listReady = false;
+
   void _onStartListListen() {
     _listing = true;
     listNode();
@@ -124,7 +129,7 @@ class DgApiNode extends SimpleNode {
     listReady = false;
   }
 
-  void listNode(){
+  void listNode() {
     if (!_listing) return;
 
     _nodeReady = false;
@@ -133,8 +138,10 @@ class DgApiNode extends SimpleNode {
     provider.services[conn].getNode(getNodeCallback, rewritePath(rpath));
     provider.services[conn].getChildren(getChildrenCallback, rewritePath(rpath));
   }
+
   bool _nodeReady;
   Map node;
+
   void getNodeCallback(Map rslt) {
     if (rslt['node'] is Map) {
       node = rslt['node'];
@@ -149,6 +156,7 @@ class DgApiNode extends SimpleNode {
 
   bool _childrenReady;
   List childrenNodes;
+
   void getChildrenCallback(Map rslt) {
     if (rslt['nodes'] is List) {
       childrenNodes = rslt['nodes'];
@@ -160,6 +168,7 @@ class DgApiNode extends SimpleNode {
       listFinished();
     }
   }
+
   void getChildrenError(String) {
     this.childrenNodes = null;
     _childrenReady = true;
@@ -167,6 +176,7 @@ class DgApiNode extends SimpleNode {
       listFinished();
     }
   }
+
   void listFinished() {
     if (node == null) {
       // node error? check if this is a action node from parent
@@ -175,6 +185,7 @@ class DgApiNode extends SimpleNode {
       provider.services[conn].getNode(getParentNodeCallback, paths.join('/'));
       return;
     }
+
     listReady = true;
     configs[r'$is'] = 'node';
     if (path != "/${conn}") {
@@ -227,7 +238,8 @@ class DgApiNode extends SimpleNode {
           });
 
           return r;
-        })..load({
+        })
+          ..load({
           r"$name": "Query Database",
           r"$invokable": "write",
           r"$params": [
@@ -257,6 +269,7 @@ class DgApiNode extends SimpleNode {
   }
 
   String checkActionName;
+
   void getParentNodeCallback(Map rslt) {
     if (rslt['node'] is Map) {
       Map pnode = rslt['node'];
@@ -267,12 +280,12 @@ class DgApiNode extends SimpleNode {
         }
       } else if (checkActionName == 'dbQuery') {
       } else if (pnode['actions'] is List) {
-         Map action = pnode['actions'].firstWhere((action)=>action['name'] == checkActionName, orElse:()=>null);
-         if (action != null) {
-           listReady = true;
-           DgSimpleActionNode actionNode = new DgSimpleActionNode(action);
-           configs.addAll(actionNode.configs);
-         }
+        Map action = pnode['actions'].firstWhere((action) => action['name'] == checkActionName, orElse:() => null);
+        if (action != null) {
+          listReady = true;
+          DgSimpleActionNode actionNode = new DgSimpleActionNode(action);
+          configs.addAll(actionNode.configs);
+        }
       }
       listChangeController.add(r'$is');
     } else {
@@ -287,7 +300,7 @@ class DgSimpleActionNode extends SimpleNode {
   DgSimpleActionNode(Map action) : super('/') {
     configs[r'$is'] = 'node';
     configs[r'$invokable'] = 'read';
-    configs[r'$name'] = action["name"];
+    configs[r"$name"] = action["name"].replaceAll("slot:", "");
     if (action['parameters'] is List) {
       Map params = {};
       for (Map param in action['parameters']) {
@@ -302,7 +315,7 @@ class DgSimpleActionNode extends SimpleNode {
     if (action['results'] is List) {
       List columns = [];
       for (Map param in action['results']) {
-          columns.add({'name':param['name'], 'type':param['type']});
+        columns.add({'name':param['name'], 'type':param['type']});
       }
       configs[r'$columns'] = columns;
     }
@@ -315,7 +328,7 @@ class SimpleChildNode extends SimpleNode {
     if (node['type'] is String) {
       configs[r'$type'] = node['type'];
     }
-    configs[r"$name"] = node["name"];
+    configs[r"$name"] = node["name"].replaceAll("slot:", "");
     if (node['enum'] is String) {
       configs[r'$type'] = 'enum[${node['enum']}]';
     }
@@ -325,4 +338,5 @@ class SimpleChildNode extends SimpleNode {
   }
 }
 
-SimpleNode _getHistoryNode = new SimpleNode('/')..load({r'$is':'getHistory', r'$invokable':'read'}, null);
+SimpleNode _getHistoryNode = new SimpleNode('/')
+  ..load({r'$is':'getHistory', r'$invokable':'read'}, null);
