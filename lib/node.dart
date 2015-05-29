@@ -300,7 +300,7 @@ class DgSimpleActionNode extends SimpleNode {
   DgSimpleActionNode(Map action) : super('/') {
     configs[r'$is'] = 'node';
     configs[r'$invokable'] = 'read';
-    configs[r"$name"] = action["name"].replaceAll("slot:", "");
+    configs[r"$name"] = action["name"].replaceAll("slot:", "").replaceAll("+", " ");
     if (action['parameters'] is List) {
       Map params = {};
       for (Map param in action['parameters']) {
@@ -328,7 +328,7 @@ class SimpleChildNode extends SimpleNode {
     if (node['type'] is String) {
       configs[r'$type'] = node['type'];
     }
-    configs[r"$name"] = node["name"].replaceAll("slot:", "");
+    configs[r"$name"] = node["name"].replaceAll("slot:", "").replaceAll("+", " ");
     if (node['enum'] is String) {
       configs[r'$type'] = 'enum[${node['enum']}]';
     }
