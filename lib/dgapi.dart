@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:dslink/responder.dart';
 import 'package:dslink/common.dart';
 import 'package:dslink/utils.dart';
+import 'package:dslink/nodes.dart';
 
 part "connection.dart";
 part "node_provider.dart";

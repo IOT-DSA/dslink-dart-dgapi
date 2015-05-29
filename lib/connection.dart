@@ -94,7 +94,9 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     } else {
       service = new DGDataService(serverUrl, serverUri.resolve(config['dataUrl']).toString(), serverUri.resolve(config['dbUrl']).toString(), this);
     }
+
     service.dgbox = dgbox;
+
     return true;
   }
 

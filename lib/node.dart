@@ -66,6 +66,7 @@ class DgApiNode extends SimpleNode {
           onError(rslt['error']);
         }
       }, rewritePath(paths.join("/")), params['Timerange'], params['Interval'], params['Rollup']);
+    } else if (actName == 'dbQuery') {
     } else {
       provider.services[conn].invoke((Map rslt){
        if (rslt['results'] is Map) {
@@ -128,6 +129,7 @@ class DgApiNode extends SimpleNode {
 
     _nodeReady = false;
     _childrenReady = false;
+
     provider.services[conn].getNode(getNodeCallback, rewritePath(rpath));
     provider.services[conn].getChildren(getChildrenCallback, rewritePath(rpath));
   }
@@ -175,28 +177,81 @@ class DgApiNode extends SimpleNode {
     }
     listReady = true;
     configs[r'$is'] = 'node';
+    if (path != "/${conn}") {
+      configs[r"$name"] = node["name"];
+    }
     if (node['type'] is String) {
       configs[r'$type'] = node['type'];
     }
+
     if (node['enum'] is String) {
       configs[r'$type'] = 'enum[${node['enum']}]';
     }
+
     if (node['unit'] is String) {
       attributes['@unit'] = node['unit'];
     }
+
     if (node['actions'] is List) {
       for (Map action in node['actions']) {
-        children[action['name']] = new SimpleActionNode(action);
+        children[action['name']] = new DgSimpleActionNode(action);
       }
     }
+
     if (childrenNodes != null) {
       for (Map n in childrenNodes) {
-        children[(n['path'] as String).split('/').last] = new SimpleChildNode(n);
+        children[(n['path'] as String).split('/').last.replaceAll("slot:", "")] = new SimpleChildNode(n);
       }
     }
+
     if (node['hasHistory'] == true) {
       children['getHistory'] = _getHistoryNode;
     }
+
+    if (path == "/${conn}") {
+      if (provider.nodes.containsKey("/${conn}/dbQuery")) {
+        SimpleNode n = children["dbQuery"] = provider.nodes["/${conn}/dbQuery"];
+        provider.services[conn].listDatabases().then((dbs) {
+          (n.configs[r"$params"] as List)[0]["type"] = buildEnumType(dbs);
+        });
+      } else {
+        SimpleActionNode dbQueryNode = new SimpleActionNode("/", (Map<String, dynamic> params) {
+          var r = new AsyncTableResult();
+          var db = params["db"];
+          var query = params["query"];
+          provider.services[conn].queryDatabase(db, query).then((result) {
+            r.columns = result["columns"];
+            r.update(result["rows"], StreamStatus.closed);
+          }).catchError((e) {
+            r.close();
+          });
+
+          return r;
+        })..load({
+          r"$name": "Query Database",
+          r"$invokable": "write",
+          r"$params": [
+            {
+              "name": "db",
+              "type": "enum[]"
+            },
+            {
+              "name": "query",
+              "type": "string"
+            }
+          ],
+          r"$result": "table",
+          r"$columns": []
+        });
+        provider.nodes["/${conn}/dbQuery"] = dbQueryNode;
+        provider.services[conn].listDatabases().then((dbs) {
+          (dbQueryNode.configs[r"$params"] as List)[0]["type"] = buildEnumType(dbs);
+          listChangeController.add(r"$is");
+        });
+        children["dbQuery"] = dbQueryNode;
+      }
+    }
+
     // update is to refresh all;
     listChangeController.add(r'$is');
   }
@@ -206,15 +261,16 @@ class DgApiNode extends SimpleNode {
     if (rslt['node'] is Map) {
       Map pnode = rslt['node'];
       if (checkActionName == 'getHistory') {
-         if (pnode['hasHistory'] == true) {
-           listReady = true;
-           configs.addAll(_getHistoryNode.configs);
-         }
+        if (pnode['hasHistory'] == true) {
+          listReady = true;
+          configs.addAll(_getHistoryNode.configs);
+        }
+      } else if (checkActionName == 'dbQuery') {
       } else if (pnode['actions'] is List) {
          Map action = pnode['actions'].firstWhere((action)=>action['name'] == checkActionName, orElse:()=>null);
          if (action != null) {
            listReady = true;
-           SimpleActionNode actionNode = new SimpleActionNode(action);
+           DgSimpleActionNode actionNode = new DgSimpleActionNode(action);
            configs.addAll(actionNode.configs);
          }
       }
@@ -227,10 +283,11 @@ class DgApiNode extends SimpleNode {
   }
 }
 
-class SimpleActionNode extends SimpleNode {
-  SimpleActionNode(Map action) : super('/') {
+class DgSimpleActionNode extends SimpleNode {
+  DgSimpleActionNode(Map action) : super('/') {
     configs[r'$is'] = 'node';
     configs[r'$invokable'] = 'read';
+    configs[r'$name'] = action["name"];
     if (action['parameters'] is List) {
       Map params = {};
       for (Map param in action['parameters']) {
@@ -258,6 +315,7 @@ class SimpleChildNode extends SimpleNode {
     if (node['type'] is String) {
       configs[r'$type'] = node['type'];
     }
+    configs[r"$name"] = node["name"];
     if (node['enum'] is String) {
       configs[r'$type'] = 'enum[${node['enum']}]';
     }

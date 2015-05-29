@@ -77,7 +77,7 @@ class DGDataService {
   }
 
   // list of pending req
-  List<QueryToken> pendingReqList = null;
+  List<QueryToken> pendingReqList;
 
   void sendRequest(QueryToken token) {
     if (pendingReqList == null) {
@@ -89,6 +89,32 @@ class DGDataService {
     token.request['reqId'] = reqId;
 
     pendingReqList.add(token);
+  }
+
+  List<String> dbs = [];
+
+  Future<List<String>> listDatabases() async {
+    try {
+      var result = await connection.loadString(Uri.parse(dbUrl + "?op=list"));
+      return JSON.decode(result);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> queryDatabase(String db, String query) async {
+    db = Uri.encodeComponent(db);
+    query = Uri.encodeComponent(query);
+
+    try {
+      return JSON.decode(await connection.loadString(Uri.parse(dbUrl + "?db=${db}&query=${query}")));
+    } catch (e) {
+      print(e);
+      return {
+        "columns": [],
+        "rows": []
+      };
+    }
   }
 
   void startSendRequest() {

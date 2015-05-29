@@ -55,11 +55,15 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
       IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password);
       connection.login().then((_) {
         services[n] = connection.service;
-        nodes["/"].addChild(n, new SimpleNode("/")..load({
+        SimpleNode node = new SimpleNode("/");
+        node.load({
           r"$$dgapi_url": url,
           r"$$dgapi_username": username,
           r"$$dgapi_password": password
-        }, null));
+        });
+
+        nodes["/"].addChild(n, node);
+
         ll++;
       }).catchError((e) {
         print("Warning: Failed to connect for connection ${n}: ${e}");

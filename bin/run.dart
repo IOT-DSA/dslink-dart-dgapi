@@ -60,12 +60,12 @@ class AddConnectionNode extends SimpleNode {
   onInvoke(Map<String, dynamic> params) async {
     IOldApiConnection connection = new OldApiBaseAuthConnection(params["url"], params["username"], params["password"]);
     await connection.login();
-    DgApiNodeProvider provider =  link.provider;
+    DgApiNodeProvider provider = link.provider;
     provider.services[params["name"]] = connection.service;
     provider.nodes["/"].addChild(params["name"], new SimpleNode("/")..load({
       r"$$dgapi_url": params["url"],
       r"$$dgapi_username": params["username"],
-      r"$$dgapi_password": params["password"]
+      r"$$dgapi_password": params["password"],
     }, null));
     link.save();
     return {};
