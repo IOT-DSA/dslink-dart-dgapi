@@ -8,57 +8,69 @@ class QueryToken {
   static void canceledCallback(Map obj) {
     // do nothing
   }
-
-  int rid;
   Map request;
   DataCallback callback;
-  Map meta;
+  //Map meta;
 
-  QueryToken(this.request, this.callback, [this.meta]);
+  QueryToken(this.request, this.callback);
 
   void cancel() {
     callback = canceledCallback;
   }
 
   bool get canceled => callback == canceledCallback;
-
+}
+class QueryTokenGroup {
+  /// method+path as key to reuse TokenGroup
+  String key;
+  int rid;
+  Map request;
+  
+  List<QueryToken> tokens;
+  QueryTokenGroup(this.request, this.tokens);
+  
   Map partialResponse;
   List partialItems;
-
-  Map mergePartial(Map part) {
-    Map partial = part['partial'];
-
-    int from = partial['from'];
-    int total = partial['total'];
-    List items = partial['items'];
-
-    if (partialResponse == null) {
-      part.remove('partial');
-      partialResponse = part;
-      partialItems = items;
-    } else {
-      partialItems.addAll(items);
+  
+  void callback(Map data) {
+    for (var token in tokens) {
+      token.callback(data);
     }
-    if (from + items.length >= total) {
-      String field = partial['field'];
-      List fields = field.split('.');
-      String lastField = fields.removeLast();
-      Map target = partialResponse;
-      for (String s in fields) {
-        if (target[s] is Map) {
-          target = target[s];
-        } else {
-          print('Error, partial result field not found');
-          return partialResponse;
-        }
-      }
-      target[lastField] = partialItems;
-      return partialResponse;
-    }
-    return null;
   }
-}
 
+   Map mergePartial(Map part) {
+     Map partial = part['partial'];
+
+     int from = partial['from'];
+     int total = partial['total'];
+     List items = partial['items'];
+
+     if (partialResponse == null) {
+       part.remove('partial');
+       partialResponse = part;
+       partialItems = items;
+     } else {
+       partialItems.addAll(items);
+     }
+     if (from + items.length >= total) {
+       String field = partial['field'];
+       List fields = field.split('.');
+       String lastField = fields.removeLast();
+       Map target = partialResponse;
+       for (String s in fields) {
+         if (target[s] is Map) {
+           target = target[s];
+         } else {
+           print('Error, partial result field not found');
+           return partialResponse;
+         }
+       }
+       target[lastField] = partialItems;
+       return partialResponse;
+     }
+     return null;
+   }
+}
 class DGDataService {
   bool dgbox = false;
   static Math.Random _rnd = new Math.Random();
@@ -77,18 +89,38 @@ class DGDataService {
   }
 
   // list of pending req
-  List<QueryToken> pendingReqList;
-
+  List<QueryTokenGroup> pendingReqList;
+  
+  QueryTokenGroup getGroup(QueryToken token) {
+    Map request = token.request;
+    String method = request['method'];
+    // merge these 2 type of requests into same group
+    String key;
+    if (method == 'GetNode' || method == 'GetNodeList') {
+      key = '$method${request["path"]}';
+      QueryTokenGroup group = pendingReqList.firstWhere((token)=>token.key == key, orElse:()=>null);
+      if (group != null) {
+        group.tokens.add(token);
+        return null;
+      }
+    }
+    QueryTokenGroup group = new QueryTokenGroup(token.request, [token]);
+    group.key = key;
+    return group;
+  }
+  
   void sendRequest(QueryToken token) {
     if (pendingReqList == null) {
       pendingReqList = [];
       startSendRequest();
     }
+    QueryTokenGroup group = getGroup(token);
+    if (group == null) return; // reuse another group;
     int reqId = _reqId++;
-    token.rid = reqId;
-    token.request['reqId'] = reqId;
+    group.rid = reqId;
+    group.request['reqId'] = reqId;
 
-    pendingReqList.add(token);
+    pendingReqList.add(group);
   }
 
   List<String> dbs = [];
@@ -132,23 +164,22 @@ class DGDataService {
 
   doSendRequest() async {
     prepareWatch();
-    List<QueryToken> waitingList = pendingReqList;
+    List<QueryTokenGroup> waitingList = pendingReqList;
     pendingReqList = null;
 
     String reqString = JSON.encode({
-      "requests": waitingList.map((token) => token.request).toList(),
+      "requests": waitingList.map((group) => group.request).toList(),
       "subscription": "$subscriptionId"
     });
 
     void onLoadError(String err) {
-      for (var token in waitingList) {
-        token.callback({'error': err});
+      for (var group in waitingList) {
+        group.callback({'error': err});
       }
     }
     List responseData;
     try {
       String str = await connection.loadString(dataUri, reqString);
-
       Map data = JSON.decode(str);
       responseData = data['responses'];
     } catch (e) {
@@ -162,14 +193,14 @@ class DGDataService {
     int len = responseData.length;
     for (int i = 0; i < len; ++i) {
       Object resData = responseData[i];
-      QueryToken token = waitingList[i];
+      QueryTokenGroup group = waitingList[i];
       if (resData is Map) {
         try {
-          token.callback(resData);
+          group.callback(resData);
         } catch (e) {
         }
       } else {
-        token.callback({'error': 'invalid response'});
+        group.callback({'error': 'invalid response'});
       }
     }
   }
@@ -342,7 +373,7 @@ class DGDataServiceAsync extends DGDataService {
     }
   }
 
-  Map<int, QueryToken> waitingIds = {};
+  Map<int, QueryTokenGroup> waitingIds = {};
 
   bool _isPolling = false;
 
@@ -364,7 +395,6 @@ class DGDataServiceAsync extends DGDataService {
     }
     pendingReqList = null;
     String reqString = '{"requests":[${reqDatas.map((it) => JSON.encode(it)).join(',')}],"subscription":"${DGDataService.subscriptionId}"}';
-
     connection.loadString(dataUri, reqString).then((String result) {
       Map data;
       List responseData;
@@ -380,12 +410,12 @@ class DGDataServiceAsync extends DGDataService {
         if (resData["reqId"] != null) {
           int id = resData["reqId"];
           if (id > 0) {
-            QueryToken body = waitingIds[id];
-            if (body == null) {
+            QueryTokenGroup group = waitingIds[id];
+            if (group == null) {
               continue;
             }
             if (resData is Map && resData["partial"] is Map) {
-              resData = body.mergePartial(resData);
+              resData = group.mergePartial(resData);
               if (resData == null) {
                 continue;
               }
@@ -393,7 +423,7 @@ class DGDataServiceAsync extends DGDataService {
 
             if (resData is Map) {
               try {
-                body.callback(resData);
+                group.callback(resData);
               } catch (e) {
               }
             } else {
