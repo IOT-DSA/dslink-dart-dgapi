@@ -48,8 +48,8 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
     HttpClientResponse resp = await req.close();
     addCookie(resp.headers.value('set-cookie'));
-    List configBytes = await resp.fold([], foldList);
-    return decoder.convert(configBytes);
+    List respBytes = await resp.fold([], foldList);
+    return decoder.convert(respBytes);
   }
 
   Utf8Decoder decoder = new Utf8Decoder(allowMalformed: true);
@@ -62,6 +62,8 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     if (serverCookie != null) {
       req.headers.add('cookie', serverCookie);
     }
+    req.headers.add('Accept-Charset', 'utf-8');
+    req.headers.add('Accept-Encoding', 'gzip, deflate');
   }
 
   String serverCookie;
