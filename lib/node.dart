@@ -305,7 +305,7 @@ class DgSimpleActionNode extends SimpleNode {
       Map params = {};
       for (Map param in action['parameters']) {
         params[param['name']] = {'type':param['type']};
-        if (param['enum'] is String && param['type'] != "bool") {
+        if (param['enum'] is String) {
           params[param['name']] = {'type':'enum[${param["enum"]}]'};
         }
       }
