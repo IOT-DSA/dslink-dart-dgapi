@@ -107,11 +107,21 @@ class DGDataService {
     query = Uri.encodeComponent(query);
 
     try {
-      return JSON.decode(await connection.loadString(Uri.parse(dbUrl + "?db=${db}&query=${query}")));
+      var uri = Uri.parse(dbUrl + "?db=${db}&query=${query}");
+      return JSON.decode(await connection.loadString(uri));
     } catch (e) {
       return {
-        "columns": [],
-        "rows": []
+        "columns": [
+          {
+            "name": "error",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            e.toString()
+          ]
+        ]
       };
     }
   }

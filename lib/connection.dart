@@ -49,8 +49,10 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     HttpClientResponse resp = await req.close();
     addCookie(resp.headers.value('set-cookie'));
     List configBytes = await resp.fold([], foldList);
-    return UTF8.decode(configBytes);
+    return decoder.convert(configBytes);
   }
+
+  Utf8Decoder decoder = new Utf8Decoder(allowMalformed: true);
 
   void authRequest(HttpClientRequest req) {
     if (basicAuth) {
