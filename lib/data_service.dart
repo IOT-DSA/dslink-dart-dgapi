@@ -224,10 +224,10 @@ class DGDataService {
       }
       toWatch.add(path);
     }
+
     if (_watchTimer == null) {
       _watchTimer = new Timer.periodic(new Duration(milliseconds:500), pollSubscription);
     }
-
   }
 
   void removeWatch(DataCallback callback, String path) {

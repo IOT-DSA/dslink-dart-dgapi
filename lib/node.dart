@@ -12,7 +12,7 @@ class DgApiNode extends SimpleNode {
   bool valueReady = false;
 
   String rewritePath(String x) {
-    if (provider.services[conn].dgbox) {
+    if (provider.services[conn] != null && provider.services[conn].dgbox) {
       if (x == "") {
         x = "/";
       }
@@ -34,6 +34,11 @@ class DgApiNode extends SimpleNode {
 
   void unsubscribe(callback(ValueUpdate)) {
     super.unsubscribe(callback);
+
+    if (!provider.services.containsKey(conn)) {
+      return;
+    }
+
     if (watching && callbacks.isEmpty) {
       provider.services[conn].removeWatch(updateDataValue, rewritePath(rpath));
       watching = false;
@@ -239,6 +244,7 @@ class DgApiNode extends SimpleNode {
 
           return r;
         });
+
         dbQueryNode.load({
           r"$name": "Query Database",
           r"$invokable": "write",
@@ -262,6 +268,28 @@ class DgApiNode extends SimpleNode {
         });
         children["dbQuery"] = dbQueryNode;
       }
+
+      if (!provider.nodes.containsKey("/${conn}/deleteConnection")) {
+        SimpleActionNode deleteConnectionNode = new SimpleActionNode("/", (Map<String, dynamic> params) {
+          provider.unregisterNode(this);
+          provider.nodes.keys.where((x) => x.startsWith("/${conn}/")).toList().forEach(provider.nodes.remove);
+          var root = (provider.nodes["/"] as SimpleNode);
+          root.updateList(r"$is");
+          root.removeChild(conn);
+          provider.nodes.remove("/${conn}");
+          provider.services.remove(conn)._watchTimer.cancel();
+        });
+
+        deleteConnectionNode.load({
+          r"$name": "Delete Connection",
+          r"$invokable": "write",
+          r"$params": [],
+          r"$columns": [],
+          r"$result": "values"
+        });
+        provider.nodes["/${conn}/deleteConnection"] = deleteConnectionNode;
+        children["deleteConnection"] = deleteConnectionNode;
+      }
     }
 
     // update is to refresh all;
@@ -279,6 +307,7 @@ class DgApiNode extends SimpleNode {
           configs.addAll(_getHistoryNode.configs);
         }
       } else if (checkActionName == 'dbQuery') {
+      } else if (checkActionName == 'deleteConnection') {
       } else if (pnode['actions'] is List) {
         Map action = pnode['actions'].firstWhere((action) => action['name'] == checkActionName, orElse:() => null);
         if (action != null) {
