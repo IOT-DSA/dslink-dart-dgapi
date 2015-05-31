@@ -12,6 +12,10 @@ class DgApiNode extends SimpleNode {
   bool valueReady = false;
 
   String rewritePath(String x) {
+    if (x.contains("definition%3A")) {
+      x = x.replaceAll("/definition%3A", "|definition:").replaceAll("%2F", "/");
+    }
+
     if (provider.services[conn].dgbox) {
       if (x == "") {
         x = "/";
@@ -215,10 +219,9 @@ class DgApiNode extends SimpleNode {
         String name;
         if (path.contains("|definition:")) {
           var parts = path.split("|");
-          var m = parts[0];
-          var n = parts[1];
+          var n = parts.last;
 
-          name = n.replaceAll("|", "%3A").replaceAll("/", "");
+          name = n.replaceFirst(":", "%3A").replaceAll("/", "%2F");
         } else {
           name = path.split("/").last.replaceAll("slot:", "");
         }
