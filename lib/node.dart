@@ -211,7 +211,18 @@ class DgApiNode extends SimpleNode {
 
     if (childrenNodes != null) {
       for (Map n in childrenNodes) {
-        children[(n['path'] as String).split('/').last.replaceAll("slot:", "")] = new SimpleChildNode(n);
+        String path = n["path"];
+        String name;
+        if (path.contains("|definition:")) {
+          var parts = path.split("|");
+          var m = parts[0];
+          var n = parts[1];
+
+          name = n.replaceAll("|", "%3A").replaceAll("/", "");
+        } else {
+          name = path.split("/").last.replaceAll("slot:", "");
+        }
+        children[name] = new SimpleChildNode(n);
       }
     }
 
