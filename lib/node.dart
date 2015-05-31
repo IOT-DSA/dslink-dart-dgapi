@@ -353,4 +353,4 @@ class SimpleChildNode extends SimpleNode {
 }
 
 SimpleNode _getHistoryNode = new SimpleNode('/')
-  ..load({r'$is':'getHistory', r'$invokable':'read'}, null);
+  ..load({r'$is':'getHistory', r'$invokable':'read', r'$name': 'Get History'}, null);
