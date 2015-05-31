@@ -238,8 +238,8 @@ class DgApiNode extends SimpleNode {
           });
 
           return r;
-        })
-          ..load({
+        });
+        dbQueryNode.load({
           r"$name": "Query Database",
           r"$invokable": "write",
           r"$params": [

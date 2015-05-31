@@ -394,7 +394,10 @@ class DGDataServiceAsync extends DGDataService {
       }
     }
     pendingReqList = null;
-    String reqString = '{"requests":[${reqDatas.map((it) => JSON.encode(it)).join(',')}],"subscription":"${DGDataService.subscriptionId}"}';
+    String reqString = JSON.encode({
+      "requests": reqDatas,
+      "subscription": DGDataService.subscriptionId
+    });
     connection.loadString(dataUri, reqString).then((String result) {
       Map data;
       List responseData;
