@@ -304,9 +304,9 @@ class DgSimpleActionNode extends SimpleNode {
     if (action['parameters'] is List) {
       Map params = {};
       for (Map param in action['parameters']) {
-        params[param['name']] = {'type':param['type']};
-        if (param['enum'] is String) {
-          params[param['name']] = {'type':'enum[${param["enum"]}]'};
+        params[param['name']] = {'type': param['type']};
+        if (param['enum'] is String && param['type'] != 'bool') {
+          params[param['name']] = {'type': 'enum[${param["enum"]}]'};
         }
       }
       configs[r'$params'] = params;
@@ -315,7 +315,7 @@ class DgSimpleActionNode extends SimpleNode {
     if (action['results'] is List) {
       List columns = [];
       for (Map param in action['results']) {
-        columns.add({'name':param['name'], 'type':param['type']});
+        columns.add({'name': param['name'], 'type': param['type']});
       }
       configs[r'$columns'] = columns;
     }
