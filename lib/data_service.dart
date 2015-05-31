@@ -25,13 +25,13 @@ class QueryTokenGroup {
   String key;
   int rid;
   Map request;
-  
+
   List<QueryToken> tokens;
   QueryTokenGroup(this.request, this.tokens);
-  
+
   Map partialResponse;
   List partialItems;
-  
+
   void callback(Map data) {
     for (var token in tokens) {
       token.callback(data);
@@ -90,7 +90,7 @@ class DGDataService {
 
   // list of pending req
   List<QueryTokenGroup> pendingReqList;
-  
+
   QueryTokenGroup getGroup(QueryToken token) {
     Map request = token.request;
     String method = request['method'];
@@ -108,7 +108,7 @@ class DGDataService {
     group.key = key;
     return group;
   }
-  
+
   void sendRequest(QueryToken token) {
     if (pendingReqList == null) {
       pendingReqList = [];
