@@ -72,7 +72,7 @@ class QueryTokenGroup {
    }
 }
 class DGDataService {
-  bool dgbox = false;
+  bool niagara = false;
   static Math.Random _rnd = new Math.Random();
   static String subscriptionId = () {
     return 'DG${_rnd.nextInt(999999)}${_rnd.nextInt(999999)}';
@@ -194,6 +194,14 @@ class DGDataService {
     for (int i = 0; i < len; ++i) {
       Object resData = responseData[i];
       QueryTokenGroup group = waitingList[i];
+
+      if (resData is Map && resData["partial"] is Map) {
+        resData = group.mergePartial(resData);
+        if (resData == null) {
+          continue;
+        }
+      }
+
       if (resData is Map) {
         try {
           group.callback(resData);
@@ -398,6 +406,7 @@ class DGDataServiceAsync extends DGDataService {
       "requests": reqDatas,
       "subscription": DGDataService.subscriptionId
     });
+
     connection.loadString(dataUri, reqString).then((String result) {
       Map data;
       List responseData;
@@ -410,6 +419,7 @@ class DGDataServiceAsync extends DGDataService {
       int len = responseData.length;
       for (var i = 0; i < len; ++i) {
         Map resData = responseData[i];
+
         if (resData["reqId"] != null) {
           int id = resData["reqId"];
           if (id > 0) {
@@ -417,6 +427,12 @@ class DGDataServiceAsync extends DGDataService {
             if (group == null) {
               continue;
             }
+
+            if (resData["error"] != null) {
+              logger.warning("Request: ${reqString}");
+              logger.warning("Response: ${resData}");
+            }
+
             if (resData is Map && resData["partial"] is Map) {
               resData = group.mergePartial(resData);
               if (resData == null) {

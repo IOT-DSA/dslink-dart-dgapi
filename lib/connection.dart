@@ -28,6 +28,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
   }
 
   Future<String> loadString(Uri uri, [String post, String contentType]) async {
+    logger.fine("LOAD ${uri}");
     HttpClient loader = new HttpClient();
     HttpClientRequest req;
     if (post != null) {
@@ -74,10 +75,34 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     }
   }
 
-  Future<bool> login() async{
-    String configStr = await loadString(serverUri.resolve('dgconfig.json'));
+  Future<bool> login() async {
+    Uri configUri = serverUri.resolve('dgconfig.json');
+    String configStr = await loadString(configUri);
+
+    if (configStr.contains("<html>")) {
+      String rootStr = await loadString(serverUri);
+
+      if (rootStr.contains("j_security_check")) {
+        basicAuth = false;
+        var result = await loadString(
+            serverUri.resolve("j_security_check"),
+            "j_username=${username}&j_password=${password}",
+            "application/x-www-form-urlencoded"
+        );
+
+        if (result.trim().isNotEmpty) {
+          return false;
+        }
+
+        configUri = serverUri.resolve('eclypse/envysion/dgconfig.json');
+        configStr = await loadString(configUri);
+        niagara = false;
+      }
+    }
+
     Map config = JSON.decode(configStr);
-    String sessionStr = await loadString(serverUri.resolve(config['sessionUrl']));
+    String sessionStr = await loadString(configUri.resolve(config['sessionUrl']));
+
     if (sessionStr.contains("DGBox version")) { // This is DGBox
       basicAuth = false;
       var result = await loadString(
@@ -85,24 +110,50 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
           "username=${username}&password=${password}",
           "application/x-www-form-urlencoded"
       );
+
       if (result.trim().isNotEmpty) {
         return false;
       }
-      sessionStr = await loadString(serverUri.resolve(config['sessionUrl']));
-      dgbox = true;
+
+      sessionStr = await loadString(configUri.resolve("..").resolve(config['sessionUrl']));
+      niagara = false;
     }
     Map session = JSON.decode(sessionStr);
 
-    if (session['connection'] != null && session['connection'].contains("async")) {
-      service = new DGDataServiceAsync(serverUrl, serverUri.resolve(config['dataUrl']).toString(), serverUri.resolve(config['dbUrl']).toString(), this);
-    } else {
-      service = new DGDataService(serverUrl, serverUri.resolve(config['dataUrl']).toString(), serverUri.resolve(config['dbUrl']).toString(), this);
+    var cn = session['connection'];
+
+    void useAsyncConn() {
+      service = new DGDataServiceAsync(
+          serverUrl,
+          configUri.resolve(config['dataUrl']).toString(),
+          configUri.resolve(config['dbUrl']).toString(), this
+      );
     }
 
-    service.dgbox = dgbox;
+    void useSyncConn() {
+      service = new DGDataService(
+          serverUrl,
+          configUri.resolve(config['dataUrl']).toString(),
+          configUri.resolve(config['dbUrl']).toString(), this
+      );
+    }
+
+    if (cn != null) {
+      var conns = cn.split(",");
+
+      if (conns.contains("async")) {
+        useAsyncConn();
+      } else {
+        useSyncConn();
+      }
+    } else {
+      useSyncConn();
+    }
+
+    service.niagara = niagara;
 
     return true;
   }
 
-  bool dgbox = false;
+  bool niagara = true;
 }

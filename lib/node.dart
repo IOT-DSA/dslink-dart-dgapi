@@ -16,7 +16,7 @@ class DgApiNode extends SimpleNode {
       x = x.replaceAll("/definition%3A", "|definition:").replaceAll("%2F", "/");
     }
 
-    if (provider.services[conn].dgbox) {
+    if (!provider.services[conn].niagara) {
       if (x == "") {
         x = "/";
       }
