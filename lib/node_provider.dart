@@ -59,9 +59,13 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
       }
 
       IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password, resolveIcons);
-      connection.login().then((_) {
+
+      int tryAgain = 0;
+
+      void setup() {
         services[n] = connection.service;
         SimpleNode node = new SimpleNode("/");
+
         node.load({
           r"$$dgapi_url": url,
           r"$$dgapi_username": username,
@@ -69,12 +73,34 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
         });
 
         nodes["/"].addChild(n, node);
+      }
 
-        ll++;
-      }).catchError((e) {
-        print("Warning: Failed to connect for connection ${n}: ${e}");
-        ll++;
-      });
+      void makeTry() {
+        connection.login().then((_) {
+          print("Connection to '${n}' succedded.");
+          setup();
+          if (tryAgain == 0) {
+            ll++;
+          }
+        }).catchError((e) {
+          print("Warning: Failed to connect for connection ${n}: ${e}");
+          if (tryAgain == 0) {
+            ll++;
+          }
+
+          tryAgain += tryAgain * 2;
+
+          if (tryAgain >= 60) {
+            tryAgain = 2;
+          }
+
+          Scheduler.after(new Duration(seconds: tryAgain), () {
+            makeTry();
+          });
+        });
+      }
+
+      makeTry();
     }
   }
 
