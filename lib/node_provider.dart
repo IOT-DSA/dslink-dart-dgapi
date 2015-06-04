@@ -92,4 +92,9 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
 
     return m;
   }
+
+  @override
+  LocalNode operator ~() {
+    return getNode("/");
+  }
 }

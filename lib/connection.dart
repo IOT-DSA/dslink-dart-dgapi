@@ -8,6 +8,8 @@ abstract class IOldApiConnection {
   DGDataService get service;
 }
 
+HttpClient loader = new HttpClient();
+
 List foldList(List a, List b) {
   return a
     ..addAll(b);
@@ -28,8 +30,6 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
   }
 
   Future<String> loadString(Uri uri, [String post, String contentType]) async {
-    logger.fine("LOAD ${uri}");
-    HttpClient loader = new HttpClient();
     HttpClientRequest req;
     if (post != null) {
       req = await loader.postUrl(uri);
@@ -49,8 +49,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
     HttpClientResponse resp = await req.close();
     addCookie(resp.headers.value('set-cookie'));
-    List respBytes = await resp.fold([], foldList);
-    return decoder.convert(respBytes);
+    return resp.transform(decoder).join();
   }
 
   Utf8Decoder decoder = new Utf8Decoder(allowMalformed: true);
