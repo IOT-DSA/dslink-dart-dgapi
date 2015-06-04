@@ -90,11 +90,10 @@ class DgApiNode extends SimpleNode {
             }
             row.add(v);
           });
-          response.updateStream(row, columns:col, streamStatus: StreamStatus.closed);
+          response.updateStream([row], columns: col, streamStatus: StreamStatus.closed);
         } else {
           onError(rslt['error']);
         }
-
       }, actName, rewritePath(paths.join("/")), params);
     }
 
