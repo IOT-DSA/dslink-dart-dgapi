@@ -49,6 +49,11 @@ class AddConnectionNode extends SimpleNode {
         {
           "name": "password",
           "type": "string"
+        },
+        {
+          "name": "resolveIcons",
+          "type": "bool",
+          "default": false
         }
       ],
       r"$invokable": "write",
@@ -64,7 +69,7 @@ class AddConnectionNode extends SimpleNode {
       url = "${url}/";
     }
 
-    IOldApiConnection connection = new OldApiBaseAuthConnection(url, params["username"], params["password"]);
+    IOldApiConnection connection = new OldApiBaseAuthConnection(url, params["username"], params["password"], params["resolveIcons"]);
     await connection.login();
     DgApiNodeProvider provider = link.provider;
     provider.services[params["name"]] = connection.service;

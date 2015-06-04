@@ -212,6 +212,12 @@ class DgApiNode extends SimpleNode {
       }
     }
 
+    if (node["icon"] is String) {
+      if (provider.services[conn].resolveIcons) {
+        configs["@icon"] = provider.services[conn].resolveIcon(node["icon"]);
+      }
+    }
+
     if (childrenNodes != null) {
       for (Map n in childrenNodes) {
         String path = n["path"];
@@ -224,6 +230,15 @@ class DgApiNode extends SimpleNode {
         } else {
           name = path.split("/").last.replaceAll("slot:", "");
         }
+
+        if (n["icon"] is String) {
+          if (provider.services[conn].resolveIcons) {
+            n["icon"] = provider.services[conn].resolveIcon(n["icon"]);
+          } else {
+            n.remove("icon");
+          }
+        }
+
         children[name] = new SimpleChildNode(n);
       }
     }
@@ -341,12 +356,18 @@ class SimpleChildNode extends SimpleNode {
     if (node['type'] is String) {
       configs[r'$type'] = node['type'];
     }
+
     configs[r"$name"] = node["name"].replaceAll("slot:", "").replaceAll("+", " ");
     if (node['enum'] is String) {
       configs[r'$type'] = 'enum[${node['enum']}]';
     }
+
     if (node['unit'] is String) {
       attributes['@unit'] = node['unit'];
+    }
+
+    if (node['icon'] is String) {
+      configs[r'$icon'] = node['icon'];
     }
   }
 }

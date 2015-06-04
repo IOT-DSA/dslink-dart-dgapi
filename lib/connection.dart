@@ -6,14 +6,10 @@ abstract class IOldApiConnection {
   Future<String> loadString(Uri uri, [String post]);
 
   DGDataService get service;
+  bool get enableIconResolving;
 }
 
 HttpClient loader = new HttpClient();
-
-List foldList(List a, List b) {
-  return a
-    ..addAll(b);
-}
 
 class OldApiBaseAuthConnection implements IOldApiConnection {
   final String serverUrl;
@@ -22,9 +18,10 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
   Uri serverUri;
   String authString;
   DGDataService service;
+  bool enableIconResolving = false;
   bool basicAuth = true;
 
-  OldApiBaseAuthConnection(this.serverUrl, this.username, this.password) {
+  OldApiBaseAuthConnection(this.serverUrl, this.username, this.password, this.enableIconResolving) {
     serverUri = Uri.parse(serverUrl);
     authString = CryptoUtils.bytesToBase64(UTF8.encode('$username:$password'));
   }

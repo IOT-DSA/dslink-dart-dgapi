@@ -52,7 +52,13 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
       var url = m[n][r"$$dgapi_url"];
       var username = m[n][r"$$dgapi_username"];
       var password = m[n][r"$$dgapi_password"];
-      IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password);
+      var resolveIcons = m[n][r"$$dgapi_icons"];
+
+      if (resolveIcons == null) {
+        resolveIcons = false;
+      }
+
+      IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password, resolveIcons);
       connection.login().then((_) {
         services[n] = connection.service;
         SimpleNode node = new SimpleNode("/");

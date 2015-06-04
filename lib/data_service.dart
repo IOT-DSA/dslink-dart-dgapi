@@ -90,6 +90,7 @@ class DGDataService {
 
   // list of pending req
   List<QueryTokenGroup> pendingReqList;
+  bool get resolveIcons => connection.enableIconResolving;
 
   QueryTokenGroup getGroup(QueryToken token) {
     Map request = token.request;
@@ -107,6 +108,14 @@ class DGDataService {
     QueryTokenGroup group = new QueryTokenGroup(token.request, [token]);
     group.key = key;
     return group;
+  }
+
+  String resolveIcon(String input) {
+    if (input.startsWith("http:") || input.startsWith("https:")) {
+      return input;
+    } else {
+      return Uri.parse(dbUrl).resolve("/").resolve(input).toString();
+    }
   }
 
   void sendRequest(QueryToken token) {
