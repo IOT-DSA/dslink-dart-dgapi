@@ -78,7 +78,7 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
 
       void makeTry() {
         connection.login().then((_) {
-          print("Connection to '${n}' succedded.");
+          print("Connection to '${n}' succeeded.");
           setup();
           if (tryAgain == 0) {
             ll++;

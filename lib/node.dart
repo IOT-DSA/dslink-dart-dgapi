@@ -80,19 +80,25 @@ class DgApiNode extends SimpleNode {
           Map results = rslt['results'];
           List row = [];
           List col = [];
-          results.forEach((k, v) {
-            if (v is String || k == null) {
-              col.add({'name':k, 'type':'string'});
-            } else if (v is num) {
-              col.add({'name':k, 'type':'number'});
-            } else if (v is bool) {
-              col.add({'name':k, 'type':'bool'});
-            } else {
-              return;
-            }
-            row.add(v);
-          });
-          response.updateStream([row], columns: col, streamStatus: StreamStatus.closed);
+
+          if (results.length == 1 && results[results.keys.first] is Map && results[results.keys.first].containsKey("columns")) {
+            var rx = results[results.keys.first];
+            response.updateStream(rx["rows"], columns: rx["columns"], streamStatus: StreamStatus.closed);
+          } else {
+            results.forEach((k, v) {
+              if (v is String || k == null) {
+                col.add({'name':k, 'type':'string'});
+              } else if (v is num) {
+                col.add({'name':k, 'type':'number'});
+              } else if (v is bool) {
+                col.add({'name':k, 'type':'bool'});
+              } else {
+                return;
+              }
+              row.add(v);
+            });
+            response.updateStream([row], columns: col, streamStatus: StreamStatus.closed);
+          }
         } else {
           onError(rslt['error']);
         }
@@ -140,8 +146,13 @@ class DgApiNode extends SimpleNode {
     _nodeReady = false;
     _childrenReady = false;
 
-    provider.services[conn].getNode(getNodeCallback, rewritePath(rpath));
-    provider.services[conn].getChildren(getChildrenCallback, rewritePath(rpath));
+    if (!provider.services[conn].actionHints.contains(rpath)) {
+      provider.services[conn].getNode(getNodeCallback, rewritePath(rpath));
+    } else {
+      List paths = rewritePath(rpath).split('/');
+      checkActionName = paths.removeLast();
+      provider.services[conn].getNode(getParentNodeCallback, paths.join('/'));
+    }
   }
 
   bool _nodeReady;
@@ -153,6 +164,13 @@ class DgApiNode extends SimpleNode {
     } else {
       node = null;
     }
+
+    if (node != null && node["hasChildren"] == true) {
+      provider.services[conn].getChildren(getChildrenCallback, rewritePath(rpath));
+    } else {
+      _childrenReady = true;
+    }
+
     _nodeReady = true;
     if (_childrenReady) {
       listFinished();
@@ -210,7 +228,9 @@ class DgApiNode extends SimpleNode {
 
     if (node['actions'] is List) {
       for (Map action in node['actions']) {
-        children[action['name']] = new DgSimpleActionNode(action);
+        var nxr = action["name"];
+        provider.services[conn].actionHints.add("${rpath}/${nxr}");
+        children[nxr] = new DgSimpleActionNode(action);
       }
     }
 
@@ -371,6 +391,11 @@ class DgSimpleActionNode extends SimpleNode {
       List columns = [];
       for (Map param in action['results']) {
         columns.add({'name': param['name'], 'type': param['type']});
+      }
+      if (action["results"].length == 1 && action["results"].first["type"] == "table") {
+        configs[r"$result"] = "table";
+      } else {
+        configs[r"$result"] = "values";
       }
       configs[r'$columns'] = columns;
     }

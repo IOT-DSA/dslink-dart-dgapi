@@ -84,6 +84,8 @@ class DGDataService {
   IOldApiConnection connection;
   int _reqId = 1;
 
+  Set<String> actionHints = new Set<String>();
+
   DGDataService(this.hostUrl, String dataUrl, this.dbUrl, this.connection) {
     dataUri = Uri.parse(dataUrl);
   }
@@ -437,11 +439,6 @@ class DGDataServiceAsync extends DGDataService {
               continue;
             }
 
-            if (resData["error"] != null) {
-              logger.warning("Request: ${reqString}");
-              logger.warning("Response: ${resData}");
-            }
-
             if (resData is Map && resData["partial"] is Map) {
               resData = group.mergePartial(resData);
               if (resData == null) {
@@ -455,6 +452,7 @@ class DGDataServiceAsync extends DGDataService {
               } catch (e) {
               }
             } else {
+              group.callback(null);
             }
             waitingIds.remove(id);
           } else if (id < 0) {
