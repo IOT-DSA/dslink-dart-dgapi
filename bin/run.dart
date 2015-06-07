@@ -1,6 +1,3 @@
-// Copyright (c) 2015, <your name>. All rights reserved. Use of this source code
-// is governed by a BSD-style license that can be found in the LICENSE file.
-
 import 'dart:async';
 import 'package:dslink/dslink.dart';
 
@@ -11,8 +8,10 @@ main(List<String> args) async {
   SimpleNode root = provider.nodes["/"] = new SimpleNode("/");
   provider.nodes["/Add_Connection"] = new AddConnectionNode("/Add_Connection");
   root.addChild("Add_Connection", provider.nodes["/Add_Connection"]);
-  link = new LinkProvider(args, 'dgapi-', nodeProvider: provider, isResponder: true, autoInitialize: false);
+  link = new LinkProvider(args, "dgapi-", nodeProvider: provider, isResponder: true, autoInitialize: false);
   link.init();
+
+  saveLink = () => link.save();
 
   int count = 0;
 
@@ -63,20 +62,25 @@ class AddConnectionNode extends SimpleNode {
 
   @override
   onInvoke(Map<String, dynamic> params) async {
+    var name = params["name"];
     var url = params["url"];
+    var user = params["username"];
+    var password = params["password"];
+    var resolveIcons = params["resolveIcons"];
 
     if (!url.endsWith("/")) {
       url = "${url}/";
     }
 
-    IOldApiConnection connection = new OldApiBaseAuthConnection(url, params["username"], params["password"], params["resolveIcons"]);
+    IOldApiConnection connection = new OldApiBaseAuthConnection(url, user, password, resolveIcons);
     await connection.login();
     DgApiNodeProvider provider = link.provider;
-    provider.services[params["name"]] = connection.service;
-    provider.nodes["/"].addChild(params["name"], new SimpleNode("/")..load({
+    provider.services[name] = connection.service;
+    provider.nodes["/"].addChild(name, new SimpleNode("/")..load({
       r"$$dgapi_url": url,
-      r"$$dgapi_username": params["username"],
-      r"$$dgapi_password": params["password"],
+      r"$$dgapi_username": user,
+      r"$$dgapi_password": password,
+      r"$$dgapi_icons": resolveIcons
     }, null));
     link.save();
     return {};

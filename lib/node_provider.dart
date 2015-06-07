@@ -69,7 +69,8 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
         node.load({
           r"$$dgapi_url": url,
           r"$$dgapi_username": username,
-          r"$$dgapi_password": password
+          r"$$dgapi_password": password,
+          r"$$dgapi_icons": resolveIcons
         });
 
         nodes["/"].addChild(n, node);
@@ -118,7 +119,8 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
       m[x] = {
         r"$$dgapi_url": c[r"$$dgapi_url"],
         r"$$dgapi_username": c[r"$$dgapi_username"],
-        r"$$dgapi_password": c[r"$$dgapi_password"]
+        r"$$dgapi_password": c[r"$$dgapi_password"],
+        r"$$dgapi_icons": c[r"$$dgapi_icons"]
       };
     }
 
