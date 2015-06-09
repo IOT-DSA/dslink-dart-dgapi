@@ -26,8 +26,9 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     authString = CryptoUtils.bytesToBase64(UTF8.encode('$username:$password'));
   }
 
-  Future<String> loadString(Uri uri, [String post, String contentType]) async {
+  Future<String> loadString(Uri uri, [String post, String contentType, bool isAuthRelated = false]) async {
     HttpClientRequest req;
+
     if (post != null) {
       req = await loader.postUrl(uri);
     } else {
@@ -45,6 +46,12 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     }
 
     HttpClientResponse resp = await req.close();
+
+    if (resp.statusCode == HttpStatus.UNAUTHORIZED && !isAuthRelated) {
+      await login();
+      return await loadString(uri, post, contentType);
+    }
+
     addCookie(resp.headers.value('set-cookie'));
     return resp.transform(decoder).join();
   }
@@ -73,7 +80,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
   Future<bool> login() async {
     Uri configUri = serverUri.resolve('dgconfig.json');
-    String configStr = await loadString(configUri);
+    String configStr = await loadString(configUri, null, null, true);
 
     if (configStr.contains("<html>")) {
       String rootStr = await loadString(serverUri);
@@ -83,7 +90,8 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
         var result = await loadString(
             serverUri.resolve("j_security_check"),
             "j_username=${username}&j_password=${password}",
-            "application/x-www-form-urlencoded"
+            "application/x-www-form-urlencoded",
+            true
         );
 
         if (result.trim().isNotEmpty) {
@@ -91,7 +99,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
         }
 
         configUri = serverUri.resolve('eclypse/envysion/dgconfig.json');
-        configStr = await loadString(configUri);
+        configStr = await loadString(configUri, null, null, true);
         niagara = false;
       }
     }
@@ -104,52 +112,59 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       var result = await loadString(
           serverUri.resolve("/dglux5-login.htm"),
           "username=${username}&password=${password}",
-          "application/x-www-form-urlencoded"
+          "application/x-www-form-urlencoded",
+          true
       );
 
       if (result.trim().isNotEmpty) {
         return false;
       }
 
-      sessionStr = await loadString(configUri.resolve("..").resolve(config['sessionUrl']));
+      sessionStr = await loadString(configUri.resolve("..").resolve(config['sessionUrl']), null, null, true);
       niagara = false;
     }
     Map session = JSON.decode(sessionStr);
 
-    var cn = session['connection'];
+    if (!setup) {
+      setup = true;
 
-    void useAsyncConn() {
-      service = new DGDataServiceAsync(
-          serverUrl,
-          configUri.resolve(config['dataUrl']).toString(),
-          configUri.resolve(config['dbUrl']).toString(), this
-      );
-    }
+      var cn = session['connection'];
 
-    void useSyncConn() {
-      service = new DGDataService(
-          serverUrl,
-          configUri.resolve(config['dataUrl']).toString(),
-          configUri.resolve(config['dbUrl']).toString(), this
-      );
-    }
+      void useAsyncConn() {
+        service = new DGDataServiceAsync(
+            serverUrl,
+            configUri.resolve(config['dataUrl']).toString(),
+            configUri.resolve(config['dbUrl']).toString(), this
+        );
+      }
 
-    if (cn != null) {
-      var conns = cn.split(",");
+      void useSyncConn() {
+        service = new DGDataService(
+            serverUrl,
+            configUri.resolve(config['dataUrl']).toString(),
+            configUri.resolve(config['dbUrl']).toString(), this
+        );
+      }
 
-      if (conns.contains("async")) {
-        useAsyncConn();
+      if (cn != null) {
+        var conns = cn.split(",");
+
+        if (conns.contains("async")) {
+          useAsyncConn();
+        } else {
+          useSyncConn();
+        }
       } else {
         useSyncConn();
       }
-    } else {
-      useSyncConn();
-    }
 
-    service.niagara = niagara;
+      service.niagara = niagara;
+
+    }
 
     return true;
   }
 
+  bool setup = false;
   bool niagara = true;
 }
