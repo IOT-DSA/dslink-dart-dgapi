@@ -35,24 +35,30 @@ class AddConnectionNode extends SimpleNode {
       r"$params": [
         {
           "name": "name",
-          "type": "string"
+          "type": "string",
+          "description": "Connection Name",
+          "placeholder": "OldServer"
         },
         {
           "name": "url",
-          "type": "string"
+          "type": "string",
+          "placeholder": "http://dgbox.example.com/dglux5/"
         },
         {
           "name": "username",
-          "type": "string"
+          "type": "string",
+          "description": "Username",
         },
         {
           "name": "password",
-          "type": "string"
+          "type": "string",
+          "editor": "password"
         },
         {
           "name": "resolveIcons",
           "type": "bool",
-          "default": false
+          "default": false,
+          "description": "Should Icons be Resolved"
         }
       ],
       r"$invokable": "write",

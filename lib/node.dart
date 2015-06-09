@@ -171,6 +171,10 @@ class DgApiNode extends SimpleNode {
       _childrenReady = true;
     }
 
+    if (node != null && node["hasHistory"] == true) {
+      configs[r"$hasHistory"] = true;
+    }
+
     _nodeReady = true;
     if (_childrenReady) {
       listFinished();
