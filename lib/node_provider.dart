@@ -1,6 +1,7 @@
 part of dglux.dgapi;
 
 class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
+  IPermissionManager permissions = new DummyPermissionManager();
   Map<String, DGDataService> services = {};
 
   Map<String, LocalNode> nodes = new Map<String, LocalNode>();

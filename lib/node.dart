@@ -55,7 +55,7 @@ class DgApiNode extends SimpleNode {
     valueReady = true;
   }
 
-  InvokeResponse invoke(Map params, Responder responder, InvokeResponse response) {
+  InvokeResponse invoke(Map params, Responder responder, InvokeResponse response, [int maxPermission = Permission.CONFIG]) {
     List paths = rpath.split('/');
     String actName = paths.removeLast();
 
