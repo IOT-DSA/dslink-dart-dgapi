@@ -72,7 +72,7 @@ class DgApiNode extends SimpleNode {
         } else {
           onError(rslt['error']);
         }
-      }, rewritePath(paths.join("/")), params['Timerange'], params['Interval'], params['Rollup']);
+      }, rewritePath(paths.join("/")), params['Timerange'], mapInterval(params['Interval']), params['Rollup']);
     } else if (actName == 'dbQuery') {
     } else {
       provider.services[conn].invoke((Map rslt) {
@@ -428,5 +428,61 @@ class SimpleChildNode extends SimpleNode {
   }
 }
 
+const Map<String, String> intervalMap = const{
+  "oneyear":"oneYear",
+  "threemonths":"threeMonths",
+  "onemonth":"oneMonth",
+  "oneweek":"oneWeek",
+  "oneday":"oneDay",
+  "twelvehours":"twelveHours",
+  "sixhours":"sixHours",
+  "fourours":"fourHours",
+  "threehours":"threeHours",
+  "twohours":"twoHours",
+  "onehour":"oneHour",
+  "thirtyminutes":"thirtyMinutes",
+  "twentyminutes":"twentyMinutes",
+  "fifteenminutes":"fifteenMinutes",
+  "tenminutes":"tenMinutes",
+  "fiveminutes":"fiveMinutes",
+  "oneminute":"oneMinute",
+  "thirtyseconds":"thirtySeconds",
+  "fifteenseconds":"fifteenSeconds",
+  "tenseconds":"tenSeconds",
+  "fiveseconds":"fiveSeconds",
+  "onesecond":"oneSecond",
+  "none":"none",
+  
+  "1y":"oneYear",
+  "3n":"threeMonths",
+  "1n":"oneMonth",
+  "1w":"oneWeek",
+  "1d":"oneDay",
+  "12h":"twelveHours",
+  "6h":"sixHours",
+  "4h":"fourHours",
+  "3h":"threeHours",
+  "2h":"twoHours",
+  "1h":"oneHour",
+  "30m":"thirtyMinutes",
+  "20m":"twentyMinutes",
+  "15m":"fifteenMinutes",
+  "10m":"tenMinutes",
+  "5m":"fiveMinutes",
+  "1m":"oneMinute",
+  "20s":"thirtySeconds",
+  "15s":"fifteenSeconds",
+  "10s":"tenSeconds",
+  "5s":"fiveSeconds",
+  "1s":"oneSecond",
+};
+String mapInterval(String input) {
+  if (input == null) return 'default';
+  input = input.toLowerCase();
+  if (intervalMap.containsKey(input)){
+    return intervalMap[input];
+  }
+  return 'default';
+}
 SimpleNode _getHistoryNode = new SimpleNode('/')
   ..load({r'$is':'getHistory', r'$invokable':'read', r'$name': 'Get History'}, null);
