@@ -132,4 +132,8 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
   LocalNode operator ~() {
     return getNode("/");
   }
+
+  Responder createResponder(String dsId) {
+    return new Responder(this, dsId);
+  }
 }
