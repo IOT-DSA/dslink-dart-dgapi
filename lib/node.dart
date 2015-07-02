@@ -10,6 +10,10 @@ class DgApiNode extends SimpleNode {
 
   DgApiNode(this.conn, String path, this.provider) : super(path);
 
+  Node getChild(String name) {
+    return provider.getNode('$path/$name');
+  }
+  
   bool watching = false;
   bool valueReady = false;
 
@@ -56,6 +60,7 @@ class DgApiNode extends SimpleNode {
   }
 
   InvokeResponse invoke(Map params, Responder responder, InvokeResponse response, LocalNode parentNode, [int maxPermission = Permission.CONFIG]) {
+    print('invoke:$params');
     List paths = rpath.split('/');
     String actName = paths.removeLast();
 
@@ -65,6 +70,7 @@ class DgApiNode extends SimpleNode {
     }
     if (actName == 'getHistory') {
       provider.services[conn].getHistory((Map rslt) {
+        print('getHistory:$rslt');
         if (rslt['columns'] is List && rslt['rows'] is List) {
           List rows = rslt['rows'];
           List cols = rslt['columns'];
