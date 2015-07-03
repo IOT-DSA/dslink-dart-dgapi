@@ -13,6 +13,9 @@ class DgApiNode extends SimpleNode {
   Node getChild(String name) {
     return provider.getNode('$path/$name');
   }
+  int getInvokePermission() {
+    return Permission.READ;
+  }
   
   bool watching = false;
   bool valueReady = false;
