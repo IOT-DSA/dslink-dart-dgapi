@@ -1,6 +1,6 @@
 part of dglux.dgapi;
 
-class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
+class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodeProvider {
   IPermissionManager permissions = new DummyPermissionManager();
   Map<String, DGDataService> services = {};
 
@@ -47,6 +47,7 @@ class DgApiNodeProvider implements NodeProvider, SerializableNodeProvider {
 
   @override
   void init([Map m, Map profiles]) {
+    if (m == null) return;
     var names = m.keys.where((it) => !it.startsWith(r"$") && it != "Add_Connection").toList();
     nx = names.length;
     for (var n in names) {

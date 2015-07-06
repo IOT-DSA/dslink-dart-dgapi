@@ -494,4 +494,4 @@ String mapInterval(String input) {
   return 'default';
 }
 SimpleNode _getHistoryNode = new SimpleNode('/')
-  ..load({r'$is':'getHistory', r'$invokable':'read', r'$name': 'Get History'}, null);
+  ..load({r'$is':'getHistory', r'$invokable':'read', r'$name': 'Get History'});

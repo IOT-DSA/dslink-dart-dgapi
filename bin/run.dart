@@ -63,7 +63,7 @@ class AddConnectionNode extends SimpleNode {
       ],
       r"$invokable": "write",
       r"$result": "values"
-    }, null);
+    });
   }
 
   @override
@@ -87,7 +87,7 @@ class AddConnectionNode extends SimpleNode {
       r"$$dgapi_username": user,
       r"$$dgapi_password": password,
       r"$$dgapi_icons": resolveIcons
-    }, null));
+    }));
     link.save();
     return {};
   }

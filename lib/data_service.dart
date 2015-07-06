@@ -170,10 +170,15 @@ class DGDataService {
   }
 
   void startSendRequest() {
-    DsTimer.callLaterOnce(doSendRequest);
+    if (!_pendingDoSendRequest) {
+      _pendingDoSendRequest = true;
+      DsTimer.callLater(doSendRequest);
+    }
   }
 
+  bool _pendingDoSendRequest = false;
   doSendRequest() async {
+    _pendingDoSendRequest = false;
     prepareWatch();
     List<QueryTokenGroup> waitingList = pendingReqList;
     pendingReqList = null;
@@ -388,16 +393,23 @@ class DGDataServiceAsync extends DGDataService {
   void startSendRequest() {
     if (_watchTimer == null) {
       _watchTimer = new Timer.periodic(new Duration(milliseconds: 500), subscribeWatch);
-      DsTimer.callLaterOnce(doSendRequest);
+      if (!_pendingDoSendRequest) {
+        _pendingDoSendRequest = true;
+        DsTimer.callLater(doSendRequest);
+      }
+      
     }
   }
 
   Map<int, QueryTokenGroup> waitingIds = {};
 
+  /// whether doSendRequest() is in callLater list
+  bool _pendingDoSendRequest = false;
   bool _isPolling = false;
 
   @override
   void doSendRequest() {
+    _pendingDoSendRequest = false;
     if (_isPolling) {
       return;
     }
