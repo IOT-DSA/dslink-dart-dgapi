@@ -135,6 +135,6 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
   }
 
   Responder createResponder(String dsId) {
-    return new Responder(this, dsId);
+    return new Responder(this);
   }
 }

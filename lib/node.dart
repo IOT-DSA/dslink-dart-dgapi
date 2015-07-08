@@ -16,7 +16,7 @@ class DgApiNode extends SimpleNode {
   int getInvokePermission() {
     return Permission.READ;
   }
-  
+
   bool watching = false;
   bool valueReady = false;
 
@@ -63,7 +63,6 @@ class DgApiNode extends SimpleNode {
   }
 
   InvokeResponse invoke(Map params, Responder responder, InvokeResponse response, LocalNode parentNode, [int maxPermission = Permission.CONFIG]) {
-    print('invoke:$params');
     List paths = rpath.split('/');
     String actName = paths.removeLast();
 
@@ -73,7 +72,6 @@ class DgApiNode extends SimpleNode {
     }
     if (actName == 'getHistory') {
       provider.services[conn].getHistory((Map rslt) {
-        print('getHistory:$rslt');
         if (rslt['columns'] is List && rslt['rows'] is List) {
           List rows = rslt['rows'];
           List cols = rslt['columns'];
@@ -461,7 +459,7 @@ const Map<String, String> intervalMap = const{
   "fiveseconds":"fiveSeconds",
   "onesecond":"oneSecond",
   "none":"none",
-  
+
   "1y":"oneYear",
   "3n":"threeMonths",
   "1n":"oneMonth",
