@@ -151,7 +151,8 @@ class DGDataService {
 
     try {
       var uri = Uri.parse(dbUrl + "?db=${db}&query=${query}");
-      return JSON.decode(await connection.loadString(uri));
+      var result = await connection.loadString(uri);
+      return JSON.decode(result);
     } catch (e) {
       return {
         "columns": [
@@ -397,7 +398,7 @@ class DGDataServiceAsync extends DGDataService {
         _pendingDoSendRequest = true;
         DsTimer.callLater(doSendRequest);
       }
-      
+
     }
   }
 
