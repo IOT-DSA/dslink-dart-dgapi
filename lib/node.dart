@@ -13,19 +13,27 @@ class DgApiNode extends SimpleNode {
   Node getChild(String name) {
     return provider.getNode('$path/$name');
   }
+
   int getInvokePermission() {
     return Permission.READ;
   }
 
   bool watching = false;
   bool valueReady = false;
+  bool _niagara;
+  bool get niagara {
+    if (_niagara == null) {
+      _niagara = provider.services[conn].niagara;
+    }
+    return _niagara;
+  }
 
   String rewritePath(String x) {
     if (x.contains("definition%3A")) {
       x = x.replaceAll("/definition%3A", "|definition:").replaceAll("%2F", "/");
     }
 
-    if (!provider.services[conn].niagara) {
+    if (!niagara) {
       if (x == "") {
         x = "/";
       }
@@ -113,6 +121,17 @@ class DgApiNode extends SimpleNode {
     }
 
     return response;
+  }
+
+  @override
+  Map getSimpleMap() {
+    var map = getSimpleMap();
+
+    if (configs[r"$hasHistory"] != null) {
+      map[r"$hasHistory"] = configs[r"$hasHistory"];
+    }
+
+    return map;
   }
 
   BroadcastStreamController<String> _listChangeController;
