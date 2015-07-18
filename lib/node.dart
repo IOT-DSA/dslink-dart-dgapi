@@ -249,7 +249,11 @@ class DgApiNode extends SimpleNode {
     }
 
     if (node['enum'] is String) {
-      configs[r'$type'] = 'enum[${node['enum']}]';
+      if (node['type'] == 'bool') {
+        configs[r'$type'] = 'bool[${node['enum']}]';
+      } else {
+        configs[r'$type'] = 'enum[${node['enum']}]';
+      }
     }
 
     if (node['unit'] is String) {
@@ -297,6 +301,7 @@ class DgApiNode extends SimpleNode {
 
     if (node['hasHistory'] == true) {
       children['getHistory'] = _getHistoryNode;
+      configs[r"$hasHistory"] = true;
     }
 
     // update is to refresh all;
