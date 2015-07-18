@@ -53,12 +53,6 @@ class AddConnectionNode extends SimpleNode {
           "name": "password",
           "type": "string",
           "editor": "password"
-        },
-        {
-          "name": "resolveIcons",
-          "type": "bool",
-          "default": false,
-          "description": "Should Icons be Resolved"
         }
       ],
       r"$invokable": "write",
@@ -72,13 +66,12 @@ class AddConnectionNode extends SimpleNode {
     var url = params["url"];
     var user = params["username"];
     var password = params["password"];
-    var resolveIcons = params["resolveIcons"];
 
     if (!url.endsWith("/")) {
       url = "${url}/";
     }
 
     DgApiNodeProvider p = link.provider;
-    p.addConnection(name, url, user, password, resolveIcons);
+    p.addConnection(name, url, user, password);
   }
 }

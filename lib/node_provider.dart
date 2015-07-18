@@ -63,14 +63,10 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     }
   }
 
-  void addConnection(String name, String url, Stirng username, String password, bool resolveIcons) {
-    if (resolveIcons == null) {
-      resolveIcons = false;
-    }
-
+  void addConnection(String name, String url, Stirng username, String password) {
     var n = name;
 
-    IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password, resolveIcons);
+    IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password);
 
     int tryAgain = 0;
 
@@ -81,8 +77,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       node.load({
         r"$$dgapi_url": url,
         r"$$dgapi_username": username,
-        r"$$dgapi_password": password,
-        r"$$dgapi_icons": resolveIcons
+        r"$$dgapi_password": password
       });
 
       var dbQueryNode = new SimpleActionNode("/${n}/dbQuery", (Map<String, dynamic> params) {
@@ -184,8 +179,39 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     makeTry();
   }
 
+  Map<String, IconModel> icons = {};
+
   @override
   void init([Map m, Map profiles]) {
+//    nodes["/sys/getIcon"] = sys.children[r"getIcon"] = new SimpleActionNode("/sys/getIcon", (Map<String, dynamic> params) async {
+//      var p = params["Path"];
+//
+//      if (icons.containsKey(p)) {
+//        var bytes = await icons[p].fetch();
+//        return {
+//          "Icon": ByteDataUtil.fromList(bytes)
+//        };
+//      } else {
+//        return {
+//          "Icon": ByteDataUtil.fromList([])
+//        };
+//      }
+//    }, this)..load({
+//      r"$invokable": "read",
+//      r"$columns": [
+//        {
+//          "name": "Icon",
+//          "type": "bytes"
+//        }
+//      ],
+//      r"$params": [
+//        {
+//          "name": "Path",
+//          "type": "string"
+//        }
+//      ]
+//    });
+
     if (m == null) return;
     var names = m.keys.where((it) => !it.startsWith(r"$") && it != "Add_Connection").toList();
     nx = names.length;
@@ -193,9 +219,8 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       var url = m[n][r"$$dgapi_url"];
       var username = m[n][r"$$dgapi_username"];
       var password = m[n][r"$$dgapi_password"];
-      var resolveIcons = m[n][r"$$dgapi_icons"];
 
-      addConnection(n, url, username, password, resolveIcons);
+      addConnection(n, url, username, password);
     }
   }
 
@@ -228,5 +253,16 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
 
   Responder createResponder(String dsId) {
     return new Responder(this);
+  }
+}
+
+class IconModel {
+  final DGDataService service;
+  final String path;
+
+  IconModel(this.service, this.path);
+
+  Future<List<int>> fetch() async {
+    return await service.connection.loadBytes(Uri.parse(service.resolveIcon(path)));
   }
 }

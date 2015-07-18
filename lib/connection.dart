@@ -4,9 +4,9 @@ abstract class IOldApiConnection {
   Future<bool> login();
 
   Future<String> loadString(Uri uri, [String post]);
+  Future<List<int>> loadBytes(Uri uri, [String post, String contentType, bool isAuthRelated = false]);
 
   DGDataService get service;
-  bool get enableIconResolving;
 }
 
 HttpClient loader = new HttpClient();
@@ -18,10 +18,9 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
   Uri serverUri;
   String authString;
   DGDataService service;
-  bool enableIconResolving = false;
   bool basicAuth = true;
 
-  OldApiBaseAuthConnection(this.serverUrl, this.username, this.password, this.enableIconResolving) {
+  OldApiBaseAuthConnection(this.serverUrl, this.username, this.password) {
     serverUri = Uri.parse(serverUrl);
     authString = CryptoUtils.bytesToBase64(UTF8.encode('$username:$password'));
   }
@@ -54,6 +53,38 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
     addCookie(resp.headers.value('set-cookie'));
     return resp.transform(decoder).join();
+  }
+
+  Future<List<int>> loadBytes(Uri uri, [String post, String contentType, bool isAuthRelated = false]) async {
+    HttpClientRequest req;
+
+    if (post != null) {
+      req = await loader.postUrl(uri);
+    } else {
+      req = await loader.getUrl(uri);
+    }
+
+    authRequest(req);
+
+    if (contentType != null) {
+      req.headers.contentType = ContentType.parse(contentType);
+    }
+
+    if (post != null) {
+      req.add(UTF8.encode(post));
+    }
+
+    HttpClientResponse resp = await req.close();
+
+    if (resp.statusCode == HttpStatus.UNAUTHORIZED && !isAuthRelated) {
+      await login();
+      return await loadBytes(uri, post, contentType);
+    }
+
+    addCookie(resp.headers.value('set-cookie'));
+    return resp.fold([], (a, b) {
+      return a..addAll(b);
+    });
   }
 
   Utf8Decoder decoder = new Utf8Decoder(allowMalformed: true);

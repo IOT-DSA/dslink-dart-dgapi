@@ -131,6 +131,10 @@ class DgApiNode extends SimpleNode {
       map[r"$hasHistory"] = configs[r"$hasHistory"];
     }
 
+    if (attributes["@icon"] != null) {
+      map["@icon"] = attributes["@icon"];
+    }
+
     return map;
   }
 
@@ -269,9 +273,14 @@ class DgApiNode extends SimpleNode {
     }
 
     if (node["icon"] is String) {
-      if (provider.services[conn].resolveIcons) {
-        configs["@icon"] = provider.services[conn].resolveIcon(node["icon"]);
-      }
+      var url = provider.services[conn].resolveIcon(node["icon"]);
+      var uri = Uri.parse(url);
+      var hash = new MD5();
+      hash.add(UTF8.encode(uri.toString()));
+      var hashz = CryptoUtils.bytesToHex(hash.close());
+      var pn = "/dgapi/${hashz}";
+//      attributes[r"@icon"] = pn;
+      provider.icons[pn] = new IconModel(provider.services[conn], pn);
     }
 
     if (childrenNodes != null) {
@@ -288,11 +297,15 @@ class DgApiNode extends SimpleNode {
         }
 
         if (n["icon"] is String) {
-          if (provider.services[conn].resolveIcons) {
-            n["icon"] = provider.services[conn].resolveIcon(n["icon"]);
-          } else {
-            n.remove("icon");
-          }
+          var url = provider.services[conn].resolveIcon(node["icon"]);
+          var uri = Uri.parse(url);
+          var hash = new MD5();
+          hash.add(UTF8.encode(uri.toString()));
+          var hashz = CryptoUtils.bytesToHex(hash.close());
+          var pn = "/dgapi/${hashz}";
+//          n["icon"] = pn;
+          n.remove("icon");
+          provider.icons[pn] = new IconModel(provider.services[conn], pn);
         }
 
         children[name] = new SimpleChildNode(n);

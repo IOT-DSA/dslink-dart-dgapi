@@ -20,6 +20,7 @@ class QueryToken {
 
   bool get canceled => callback == canceledCallback;
 }
+
 class QueryTokenGroup {
   /// method+path as key to reuse TokenGroup
   String key;
@@ -92,7 +93,6 @@ class DGDataService {
 
   // list of pending req
   List<QueryTokenGroup> pendingReqList;
-  bool get resolveIcons => connection.enableIconResolving;
 
   QueryTokenGroup getGroup(QueryToken token) {
     Map request = token.request;
