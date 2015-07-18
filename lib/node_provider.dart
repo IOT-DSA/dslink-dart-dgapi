@@ -4,8 +4,10 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
   IPermissionManager permissions = new DummyPermissionManager();
   Map<String, DGDataService> services = {};
 
+  @override
   Map<String, LocalNode> nodes = new Map<String, LocalNode>();
 
+  @override
   LocalNode getNode(String path) {
     if (nodes.containsKey(path)) {
       return nodes[path];
@@ -33,6 +35,11 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     }
 
     return n;
+  }
+
+  @override
+  LocalNode getOrCreateNode(String path, [bool addToTree = false]) {
+    return getNode(path);
   }
 
   LocalNode operator [](String path) {

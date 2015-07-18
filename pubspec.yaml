@@ -6,6 +6,4 @@ environment:
 dependencies:
   crypto: any
   dslink:
-    git:
-      url: git://github.com/IOT-DSA/sdk-dslink-dart.git
-      ref: 167fd865965e0116041f9d3933e87850f7c16a06
+    git: git://github.com/IOT-DSA/sdk-dslink-dart.git
