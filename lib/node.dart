@@ -299,76 +299,6 @@ class DgApiNode extends SimpleNode {
       children['getHistory'] = _getHistoryNode;
     }
 
-    if (path == "/${conn}") {
-      if (provider.nodes.containsKey("/${conn}/dbQuery")) {
-        SimpleNode n = children["dbQuery"] = provider.nodes["/${conn}/dbQuery"];
-        provider.services[conn].listDatabases().then((dbs) {
-          (n.configs[r"$params"] as List)[0]["type"] = buildEnumType(dbs);
-        });
-      } else {
-        SimpleActionNode dbQueryNode = new SimpleActionNode("/", (Map<String, dynamic> params) {
-          var r = new AsyncTableResult();
-          var db = params["db"];
-          var query = params["query"];
-          provider.services[conn].queryDatabase(db, query).then((result) {
-            r.columns = result["columns"];
-            r.update(result["rows"], StreamStatus.closed);
-          }).catchError((e) {
-            r.close();
-          });
-
-          return r;
-        });
-        dbQueryNode.load({
-          r"$name": "Query Database",
-          r"$invokable": "write",
-          r"$params": [
-            {
-              "name": "db",
-              "type": "enum[]"
-            },
-            {
-              "name": "query",
-              "type": "string"
-            }
-          ],
-          r"$result": "table",
-          r"$columns": []
-        });
-        provider.nodes["/${conn}/dbQuery"] = dbQueryNode;
-        provider.services[conn].listDatabases().then((dbs) {
-          (dbQueryNode.configs[r"$params"] as List)[0]["type"] = buildEnumType(dbs);
-          listChangeController.add(r"$is");
-        });
-        children["dbQuery"] = dbQueryNode;
-      }
-
-      var deleteConnNode = new SimpleActionNode("/${conn}/Delete_Connection", (Map<String, dynamic> params) {
-        provider.services.remove(conn);
-        SimpleNode x = provider.nodes["/"];
-        x.removeChild(conn);
-        provider.nodes["/${conn}"].children.clear();
-        var keys = provider.nodes.keys.where((x) {
-          return x.startsWith("/${conn}");
-        }).toList();
-        keys.sort((a, b) {
-          return a.split("/").length.compareTo(b.split("/").length);
-        });
-        keys.forEach((k) {
-          var n = provider.nodes.remove(k);
-          n.listChangeController.add(r"$is");
-        });
-        saveLink();
-      });
-
-      deleteConnNode.configs[r"$name"] = "Delete Connection";
-      deleteConnNode.configs[r"$invokable"] = "write";
-      deleteConnNode.configs[r"$result"] = "values";
-
-      provider.nodes[deleteConnNode.path] = deleteConnNode;
-      children["Delete_Connection"] = deleteConnNode;
-    }
-
     // update is to refresh all;
     listChangeController.add(r'$is');
   }
@@ -454,7 +384,7 @@ class SimpleChildNode extends SimpleNode {
   }
 }
 
-const Map<String, String> intervalMap = const{
+const Map<String, String> intervalMap = const {
   "oneyear":"oneYear",
   "threemonths":"threeMonths",
   "onemonth":"oneMonth",

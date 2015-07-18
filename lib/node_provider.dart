@@ -21,6 +21,17 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
 
     var n = new DgApiNode(conn, path, this);
     n.rpath = n.path.substring("/${conn}".length);
+
+    if (path == "/${conn}") {
+      if (nodes.containsKey("/${conn}/dbQuery")) {
+        n.children["dbQuery"] = nodes["/${conn}/dbQuery"];
+      }
+
+      if (nodes.containsKey("/${conn}/Delete_Connection")) {
+        n.children["Delete_Connection"] = nodes["/${conn}/Delete_Connection"];
+      }
+    }
+
     return n;
   }
 
@@ -45,6 +56,127 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     }
   }
 
+  void addConnection(String name, String url, Stirng username, String password, bool resolveIcons) {
+    if (resolveIcons == null) {
+      resolveIcons = false;
+    }
+
+    var n = name;
+
+    IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password, resolveIcons);
+
+    int tryAgain = 0;
+
+    void setup() {
+      services[n] = connection.service;
+      SimpleNode node = new SimpleNode("/", this);
+
+      node.load({
+        r"$$dgapi_url": url,
+        r"$$dgapi_username": username,
+        r"$$dgapi_password": password,
+        r"$$dgapi_icons": resolveIcons
+      });
+
+      var dbQueryNode = new SimpleActionNode("/${n}/dbQuery", (Map<String, dynamic> params) {
+        var r = new AsyncTableResult();
+        var db = params["db"];
+        var query = params["query"];
+        connection.service.queryDatabase(db, query).then((result) {
+          r.columns = result["columns"];
+          r.update(result["rows"], StreamStatus.closed);
+        }).catchError((e) {
+          r.close();
+        });
+
+        return r;
+      }, this);
+
+      var conn = n;
+
+      var deleteConnectionNode = new SimpleActionNode("/${conn}/Delete_Connection", (Map<String, dynamic> params) {
+        if (connection.service._watchTimer != null) {
+          connection.service._watchTimer.cancel();
+        }
+
+        removeNode("/${conn}");
+        nodes.keys.toList().forEach((path) {
+          if (path == "/${conn}" || path.startsWith("/${conn}/")) {
+            nodes.remove(path);
+          }
+        });
+        saveLink();
+      });
+
+      dbQueryNode.load({
+        r"$name": "Query Database",
+        r"$invokable": "write",
+        r"$params": [
+          {
+            "name": "db",
+            "type": "enum[]"
+          },
+          {
+            "name": "query",
+            "type": "string"
+          }
+        ],
+        r"$result": "table",
+        r"$columns": []
+      });
+
+      deleteConnectionNode.load({
+        r"$name": "Delete Connection",
+        r"$invokable": "write",
+        r"$result": "values"
+      });
+
+      node.addChild("dbQuery", dbQueryNode);
+      nodes["/${n}/dbQuery"] = dbQueryNode;
+      node.addChild("Delete_Connection", deleteConnectionNode);
+      nodes["/${n}/Delete_Connection"] = deleteConnectionNode;
+
+      connection.service.listDatabases().then((dbs) {
+        (dbQueryNode.configs[r"$params"] as List)[0]["type"] = buildEnumType(dbs);
+        dbQueryNode.listChangeController.add(r"$params");
+      });
+
+      nodes["/"].addChild(n, node);
+    }
+
+    var retries = 0;
+    void makeTry() {
+      retries++;
+      connection.login().then((_) {
+        print("Connection to '${n}' succeeded.");
+        setup();
+        if (tryAgain == 0) {
+          ll++;
+        }
+      }).catchError((e) {
+        if (retries < 5) {
+          print("Warning: Failed to connect for connection ${n}: ${e}");
+        }
+
+        if (tryAgain == 0) {
+          ll++;
+        }
+
+        tryAgain += tryAgain * 2;
+
+        if (tryAgain >= 60) {
+          tryAgain = 2;
+        }
+
+        Scheduler.after(new Duration(seconds: tryAgain), () {
+          makeTry();
+        });
+      });
+    }
+
+    makeTry();
+  }
+
   @override
   void init([Map m, Map profiles]) {
     if (m == null) return;
@@ -56,59 +188,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       var password = m[n][r"$$dgapi_password"];
       var resolveIcons = m[n][r"$$dgapi_icons"];
 
-      if (resolveIcons == null) {
-        resolveIcons = false;
-      }
-
-      IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password, resolveIcons);
-
-      int tryAgain = 0;
-
-      void setup() {
-        services[n] = connection.service;
-        SimpleNode node = new SimpleNode("/");
-
-        node.load({
-          r"$$dgapi_url": url,
-          r"$$dgapi_username": username,
-          r"$$dgapi_password": password,
-          r"$$dgapi_icons": resolveIcons
-        });
-
-        nodes["/"].addChild(n, node);
-      }
-
-      var retries = 0;
-      void makeTry() {
-        retries++;
-        connection.login().then((_) {
-          print("Connection to '${n}' succeeded.");
-          setup();
-          if (tryAgain == 0) {
-            ll++;
-          }
-        }).catchError((e) {
-          if (retries < 5) {
-            print("Warning: Failed to connect for connection ${n}: ${e}");
-          }
-
-          if (tryAgain == 0) {
-            ll++;
-          }
-
-          tryAgain += tryAgain * 2;
-
-          if (tryAgain >= 60) {
-            tryAgain = 2;
-          }
-
-          Scheduler.after(new Duration(seconds: tryAgain), () {
-            makeTry();
-          });
-        });
-      }
-
-      makeTry();
+      addConnection(n, url, username, password, resolveIcons);
     }
   }
 

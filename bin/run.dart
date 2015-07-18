@@ -78,17 +78,7 @@ class AddConnectionNode extends SimpleNode {
       url = "${url}/";
     }
 
-    IOldApiConnection connection = new OldApiBaseAuthConnection(url, user, password, resolveIcons);
-    await connection.login();
-    DgApiNodeProvider provider = link.provider;
-    provider.services[name] = connection.service;
-    provider.nodes["/"].addChild(name, new SimpleNode("/")..load({
-      r"$$dgapi_url": url,
-      r"$$dgapi_username": user,
-      r"$$dgapi_password": password,
-      r"$$dgapi_icons": resolveIcons
-    }));
-    link.save();
-    return {};
+    DgApiNodeProvider p = link.provider;
+    p.addConnection(name, url, user, password, resolveIcons);
   }
 }

@@ -398,7 +398,6 @@ class DGDataServiceAsync extends DGDataService {
         _pendingDoSendRequest = true;
         DsTimer.callLater(doSendRequest);
       }
-
     }
   }
 

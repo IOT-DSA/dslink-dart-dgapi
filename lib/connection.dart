@@ -159,7 +159,6 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       }
 
       service.niagara = niagara;
-
     }
 
     return true;
