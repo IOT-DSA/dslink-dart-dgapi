@@ -63,7 +63,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     }
   }
 
-  void addConnection(String name, String url, Stirng username, String password) {
+  void addConnection(String name, String url, String username, String password) {
     var n = name;
 
     IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password);
