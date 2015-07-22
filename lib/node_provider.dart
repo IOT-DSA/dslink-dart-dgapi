@@ -149,12 +149,13 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     var retries = 0;
     void makeTry() {
       retries++;
-      connection.login().then((_) {
+      connection.loginWithError().then((_) {
         print("Connection to '${n}' succeeded.");
         setup();
         if (tryAgain == 0) {
           ll++;
         }
+        nx++;
       }).catchError((e) {
         if (retries < 5) {
           print("Warning: Failed to connect for connection ${n}: ${e}");

@@ -42,6 +42,7 @@ class AddConnectionNode extends SimpleNode {
         {
           "name": "url",
           "type": "string",
+          "description": "Url",
           "placeholder": "http://dgbox.example.com/dglux5/"
         },
         {
@@ -52,7 +53,8 @@ class AddConnectionNode extends SimpleNode {
         {
           "name": "password",
           "type": "string",
-          "editor": "password"
+          "editor": "password",
+          "description": "Password"
         }
       ],
       r"$invokable": "write",
@@ -67,11 +69,16 @@ class AddConnectionNode extends SimpleNode {
     var user = params["username"];
     var password = params["password"];
 
-    if (!url.endsWith("/")) {
-      url = "${url}/";
-    }
-
-    DgApiNodeProvider p = link.provider;
-    p.addConnection(name, url, user, password);
+    IOldApiConnection connection = new OldApiBaseAuthConnection(url, user, password);
+    await connection.login();
+    DgApiNodeProvider provider = link.provider;
+    provider.services[name] = connection.service;
+    provider.nodes["/"].addChild(name, new SimpleNode("/")..load({
+      r"$$dgapi_url": url,
+      r"$$dgapi_username": user,
+      r"$$dgapi_password": password
+    }));
+    link.save();
+    return {};
   }
 }

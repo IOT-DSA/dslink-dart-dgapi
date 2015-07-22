@@ -272,6 +272,7 @@ class DgApiNode extends SimpleNode {
       }
     }
 
+/*
     if (node["icon"] is String) {
       var url = provider.services[conn].resolveIcon(node["icon"]);
       var uri = Uri.parse(url);
@@ -282,6 +283,7 @@ class DgApiNode extends SimpleNode {
 //      attributes[r"@icon"] = pn;
       provider.icons[pn] = new IconModel(provider.services[conn], pn);
     }
+*/
 
     if (childrenNodes != null) {
       for (Map n in childrenNodes) {
@@ -296,7 +298,7 @@ class DgApiNode extends SimpleNode {
           name = path.split("/").last.replaceAll("slot:", "");
         }
 
-        if (n["icon"] is String) {
+/*        if (n["icon"] is String) {
           var url = provider.services[conn].resolveIcon(node["icon"]);
           var uri = Uri.parse(url);
           var hash = new MD5();
@@ -306,7 +308,9 @@ class DgApiNode extends SimpleNode {
 //          n["icon"] = pn;
           n.remove("icon");
           provider.icons[pn] = new IconModel(provider.services[conn], pn);
-        }
+        }*/
+
+        n.remove("icon");
 
         children[name] = new SimpleChildNode(n);
       }

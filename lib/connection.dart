@@ -52,7 +52,8 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     }
 
     addCookie(resp.headers.value('set-cookie'));
-    return resp.transform(decoder).join();
+    var data = await resp.transform(decoder).join();
+    return data;
   }
 
   Future<List<int>> loadBytes(Uri uri, [String post, String contentType, bool isAuthRelated = false]) async {
@@ -106,6 +107,13 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
   void addCookie(String cookie) {
     if (cookie != null) {
       serverCookie = cookie.split(';').where((str) => !str.toLowerCase().contains('path=')).join(';');
+    }
+  }
+
+  Future loginWithError() async {
+    var result = await login();
+    if (!result) {
+      throw new Exception("Failed!");
     }
   }
 
