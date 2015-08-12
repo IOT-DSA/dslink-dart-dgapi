@@ -15,8 +15,9 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
 
     // don't cache in nodes map, it's only for running subscription
     // other nodes are just used once and throw away
-    var conn = path.split("/").take(2).join("/").substring(1);
-
+    var nm = path.indexOf("/", 1);
+    var conn = path.length > 1 ? path.substring(1, nm < 0 ? null : nm) : "";
+    
     if (!services.containsKey(conn)) {
       return new SimpleNode(path);
     }
@@ -38,7 +39,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
   }
 
   @override
-  LocalNode getOrCreateNode(String path, [bool addToTree]) {
+  LocalNode getOrCreateNode(String path, [bool addToTree = true]) {
     return getNode(path);
   }
 
