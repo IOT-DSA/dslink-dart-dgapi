@@ -240,8 +240,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       m[x] = {
         r"$$dgapi_url": c[r"$$dgapi_url"],
         r"$$dgapi_username": c[r"$$dgapi_username"],
-        r"$$dgapi_password": c[r"$$dgapi_password"],
-        r"$$dgapi_icons": c[r"$$dgapi_icons"]
+        r"$$dgapi_password": c[r"$$dgapi_password"]
       };
     }
 
