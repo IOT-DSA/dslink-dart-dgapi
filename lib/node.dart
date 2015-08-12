@@ -237,9 +237,9 @@ class DgApiNode extends SimpleNode {
   void listFinished() {
     if (node == null) {
       // node error? check if this is a action node from parent
-      List paths = rewritePath(rpath).split('/');
-      checkActionName = paths.removeLast();
-      provider.services[conn].getNode(getParentNodeCallback, paths.join('/'));
+      var m = rewritePath(rpath);
+      checkActionName = m.substring(m.lastIndexOf("/"));
+      provider.services[conn].getNode(getParentNodeCallback, m);
       return;
     }
 
