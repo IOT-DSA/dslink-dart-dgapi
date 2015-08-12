@@ -38,7 +38,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
   }
 
   @override
-  LocalNode getOrCreateNode(String path, [bool addToTree = false]) {
+  LocalNode getOrCreateNode(String path, [bool addToTree]) {
     return getNode(path);
   }
 
