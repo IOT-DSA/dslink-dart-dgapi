@@ -16,14 +16,14 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     // don't cache in nodes map, it's only for running subscription
     // other nodes are just used once and throw away
     var nm = path.indexOf("/", 1);
-    var conn = path.length > 1 ? path.substring(1, nm < 0 ? null : nm) : "";
-    
+    String conn = path.length > 1 ? path.substring(1, nm < 0 ? null : nm) : "";
+
     if (!services.containsKey(conn)) {
       return new SimpleNode(path);
     }
 
     var n = new DgApiNode(conn, path, this);
-    n.rpath = n.path.substring("/${conn}".length);
+    n.rpath = n.path.substring(conn.length + 1);
 
     if (path == "/${conn}") {
       if (nodes.containsKey("/${conn}/dbQuery")) {
