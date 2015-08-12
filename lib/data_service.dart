@@ -8,8 +8,10 @@ class QueryToken {
   static void canceledCallback(Map obj) {
     // do nothing
   }
+
   Map request;
   DataCallback callback;
+
   //Map meta;
 
   QueryToken(this.request, this.callback);
@@ -28,6 +30,7 @@ class QueryTokenGroup {
   Map request;
 
   List<QueryToken> tokens;
+
   QueryTokenGroup(this.request, this.tokens);
 
   Map partialResponse;
@@ -39,39 +42,40 @@ class QueryTokenGroup {
     }
   }
 
-   Map mergePartial(Map part) {
-     Map partial = part['partial'];
+  Map mergePartial(Map part) {
+    Map partial = part['partial'];
 
-     int from = partial['from'];
-     int total = partial['total'];
-     List items = partial['items'];
+    int from = partial['from'];
+    int total = partial['total'];
+    List items = partial['items'];
 
-     if (partialResponse == null) {
-       part.remove('partial');
-       partialResponse = part;
-       partialItems = items;
-     } else {
-       partialItems.addAll(items);
-     }
-     if (from + items.length >= total) {
-       String field = partial['field'];
-       List fields = field.split('.');
-       String lastField = fields.removeLast();
-       Map target = partialResponse;
-       for (String s in fields) {
-         if (target[s] is Map) {
-           target = target[s];
-         } else {
-           print('Error, partial result field not found');
-           return partialResponse;
-         }
-       }
-       target[lastField] = partialItems;
-       return partialResponse;
-     }
-     return null;
-   }
+    if (partialResponse == null) {
+      part.remove('partial');
+      partialResponse = part;
+      partialItems = items;
+    } else {
+      partialItems.addAll(items);
+    }
+    if (from + items.length >= total) {
+      String field = partial['field'];
+      List fields = field.split('.');
+      String lastField = fields.removeLast();
+      Map target = partialResponse;
+      for (String s in fields) {
+        if (target[s] is Map) {
+          target = target[s];
+        } else {
+          print('Error, partial result field not found');
+          return partialResponse;
+        }
+      }
+      target[lastField] = partialItems;
+      return partialResponse;
+    }
+    return null;
+  }
 }
+
 class DGDataService {
   bool niagara = false;
   static Math.Random _rnd = new Math.Random();
@@ -101,7 +105,7 @@ class DGDataService {
     String key;
     if (method == 'GetNode' || method == 'GetNodeList') {
       key = '$method${request["path"]}';
-      QueryTokenGroup group = pendingReqList.firstWhere((token)=>token.key == key, orElse:()=>null);
+      QueryTokenGroup group = pendingReqList.firstWhere((token) => token.key == key, orElse:() => null);
       if (group != null) {
         group.tokens.add(token);
         return null;
@@ -126,7 +130,8 @@ class DGDataService {
       startSendRequest();
     }
     QueryTokenGroup group = getGroup(token);
-    if (group == null) return; // reuse another group;
+    if (group == null) return;
+    // reuse another group;
     int reqId = _reqId++;
     group.rid = reqId;
     group.request['reqId'] = reqId;
@@ -178,6 +183,7 @@ class DGDataService {
   }
 
   bool _pendingDoSendRequest = false;
+
   doSendRequest() async {
     _pendingDoSendRequest = false;
     prepareWatch();
@@ -249,10 +255,10 @@ class DGDataService {
       }
       toWatch.add(path);
     }
-    if (_watchTimer == null) {
-      _watchTimer = new Timer.periodic(new Duration(milliseconds:500), pollSubscription);
-    }
 
+    if (_watchTimer == null) {
+      _watchTimer = new Timer.periodic(const Duration(milliseconds:500), pollSubscription);
+    }
   }
 
   void removeWatch(DataCallback callback, String path) {
@@ -330,8 +336,8 @@ class DGDataService {
   }
 
   QueryToken invoke(
-      DataCallback callback, String actionName, String path, Map parameters,
-      {bool reuseReq: false, bool table: false, int streamCache: 0}) {
+    DataCallback callback, String actionName, String path, Map parameters,
+    {bool reuseReq: false, bool table: false, int streamCache: 0}) {
     Map m = {"method": "Invoke", "action": actionName, };
     if (path != null) {
       m['path'] = path;
@@ -379,7 +385,7 @@ class DGDataService {
 
 class DGDataServiceAsync extends DGDataService {
   DGDataServiceAsync(String hostUrl, String dataUrl, String dbUrl, IOldApiConnection connection) :
-  super(hostUrl, dataUrl, dbUrl, connection);
+    super(hostUrl, dataUrl, dbUrl, connection);
 
   bool needTimer() {
     return !watchs.isEmpty || !waitingIds.isEmpty || pendingReqList != null;

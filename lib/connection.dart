@@ -2,6 +2,7 @@ part of dglux.dgapi;
 
 abstract class IOldApiConnection {
   Future<bool> login();
+  Future loginWithError();
 
   Future<String> loadString(Uri uri, [String post]);
   Future<List<int>> loadBytes(Uri uri, [String post, String contentType, bool isAuthRelated = false]);

@@ -3,6 +3,8 @@ import 'package:dslink/dslink.dart';
 
 import '../lib/dgapi.dart';
 
+bool hasChanged = false;
+
 main(List<String> args) async {
   DgApiNodeProvider provider = new DgApiNodeProvider();
   SimpleNode root = provider.nodes["/"] = new SimpleNode("/");
@@ -11,7 +13,16 @@ main(List<String> args) async {
   link = new LinkProvider(args, "dgapi-", nodeProvider: provider, isResponder: true, autoInitialize: false);
   link.init();
 
-  saveLink = () => link.save();
+  saveLink = () {
+    hasChanged = true;
+  };
+
+  Scheduler.every(Interval.FIVE_SECONDS, () async {
+    if (hasChanged) {
+      hasChanged = false;
+      await link.saveAsync();
+    }
+  });
 
   int count = 0;
 
@@ -21,7 +32,7 @@ main(List<String> args) async {
       link.connect();
       break;
     } else {
-      await new Future.delayed(new Duration(milliseconds: 5));
+      await new Future.delayed(const Duration(milliseconds: 5));
     }
   }
 }
