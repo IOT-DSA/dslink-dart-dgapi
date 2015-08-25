@@ -235,7 +235,11 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       r"$is": "node"
     };
 
-    for (var x in services.keys) {
+    for (var x in services.keys.toList()) {
+      if (!nodes["/"].children.containsKey(x)) {
+        services.remove(x);
+        continue;
+      }
       var c = nodes["/"].children[x].configs;
       m[x] = {
         r"$$dgapi_url": c[r"$$dgapi_url"],
@@ -252,7 +256,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     return getNode("/");
   }
 
-  Responder createResponder(String dsId) {
+  Responder createResponder(String dsId, String sessionId) {
     return new Responder(this);
   }
 }
