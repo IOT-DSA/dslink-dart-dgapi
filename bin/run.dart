@@ -89,7 +89,7 @@ class AddConnectionNode extends SimpleNode {
       r"$$dgapi_username": user,
       r"$$dgapi_password": password
     }));
-    link.save();
+    hasChanged = true;
     return {};
   }
 }

@@ -399,7 +399,7 @@ class DGDataServiceAsync extends DGDataService {
 
   void startSendRequest() {
     if (_watchTimer == null) {
-      _watchTimer = new Timer.periodic(new Duration(milliseconds: 500), subscribeWatch);
+      _watchTimer = new Timer.periodic(const Duration(milliseconds: 500), subscribeWatch);
       if (!_pendingDoSendRequest) {
         _pendingDoSendRequest = true;
         DsTimer.callLater(doSendRequest);
