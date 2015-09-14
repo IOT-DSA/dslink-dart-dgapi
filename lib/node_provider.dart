@@ -169,6 +169,10 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
           ll++;
         }
 
+        if (tryAgain <= 0) {
+          tryAgain = 1;
+        }
+
         tryAgain += tryAgain * 2;
 
         if (tryAgain >= 60) {
