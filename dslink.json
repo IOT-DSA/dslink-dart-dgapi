@@ -16,6 +16,10 @@
     "name": {
       "type": "string",
       "default": "dgapi"
+    },
+    "log": {
+      "type": "enum",
+      "default": "info"
     }
   }
 }
