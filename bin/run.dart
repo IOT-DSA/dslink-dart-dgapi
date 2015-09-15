@@ -75,10 +75,10 @@ class AddConnectionNode extends SimpleNode {
 
   @override
   onInvoke(Map<String, dynamic> params) async {
-    var name = params["name"];
-    var url = params["url"];
-    var user = params["username"];
-    var password = params["password"];
+    String name = params["name"];
+    String url = params["url"];
+    String user = params["username"];
+    String password = params["password"];
 
     IOldApiConnection connection = new OldApiBaseAuthConnection(url, user, password);
     await connection.login();

@@ -120,7 +120,11 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
   Future<bool> login() async {
     Uri configUri = serverUri.resolve('dgconfig.json');
-    String configStr = await loadString(configUri, null, null, true);
+    String configStr = "";
+
+    try {
+      configStr = await loadString(configUri, null, null, true);
+    } catch (e) {}
 
     if (configStr.contains("<html>")) {
       String rootStr = await loadString(serverUri);
@@ -144,7 +148,23 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       }
     }
 
-    Map config = JSON.decode(configStr);
+    Map config;
+    try {
+      config = JSON.decode(configStr);
+    } catch (e) {
+      config = {
+        "indexUrl": "index.html",
+        "viewerUrl": "view.html",
+        "dataUrl": "../dgjson",
+        "userUrl": "../dguser",
+        "assetUrl": "../dgfs",
+        "sessionUrl": "../dguser/session",
+        "dbUrl": "../dgdb",
+        "loginUrl": "../login",
+        "logoutUrl": "../logout",
+        "updateUrl": "update.html"
+      };
+    }
     String sessionStr = await loadString(configUri.resolve(config['sessionUrl']));
 
     if (sessionStr.contains("DGBox version")) { // This is DGBox
