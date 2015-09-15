@@ -338,7 +338,7 @@ class DGDataService {
   QueryToken invoke(
     DataCallback callback, String actionName, String path, Map parameters,
     {bool reuseReq: false, bool table: false, int streamCache: 0}) {
-    Map m = {"method": "Invoke", "action": actionName, };
+    Map m = {"method": "Invoke", "action": actionName};
     if (path != null) {
       m['path'] = path;
     }

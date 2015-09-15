@@ -192,17 +192,19 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
       void useAsyncConn() {
         service = new DGDataServiceAsync(
-            serverUrl,
-            configUri.resolve(config['dataUrl']).toString(),
-            configUri.resolve(config['dbUrl']).toString(), this
+          serverUrl,
+          configUri.resolve(config['dataUrl']).toString(),
+          configUri.resolve(config['dbUrl']).toString(),
+          this
         );
       }
 
       void useSyncConn() {
         service = new DGDataService(
-            serverUrl,
-            configUri.resolve(config['dataUrl']).toString(),
-            configUri.resolve(config['dbUrl']).toString(), this
+          serverUrl,
+          configUri.resolve(config['dataUrl']).toString(),
+          configUri.resolve(config['dbUrl']).toString(),
+          this
         );
       }
 

@@ -44,13 +44,13 @@ class DgApiNode extends SimpleNode {
     }
   }
 
-  RespSubscribeListener subscribe(callback(ValueUpdate), [int cachelevel = 1]) {
+  RespSubscribeListener subscribe(callback(ValueUpdate), [int qos = 1]) {
     if (!watching) {
       provider.registerNode(conn, this);
       provider.services[conn].addWatch(updateDataValue, rewritePath(rpath));
       watching = true;
     }
-    return super.subscribe(callback, cachelevel);
+    return super.subscribe(callback, qos);
   }
 
   void unsubscribe(callback(ValueUpdate)) {
@@ -78,6 +78,7 @@ class DgApiNode extends SimpleNode {
       // TODO: implement error
       response.close(new DSError('serverError'));
     }
+
     if (actName == 'getHistory') {
       provider.services[conn].getHistory((Map rslt) {
         if (rslt['columns'] is List && rslt['rows'] is List) {
@@ -91,8 +92,13 @@ class DgApiNode extends SimpleNode {
     } else if (actName == 'dbQuery') {
     } else {
       provider.services[conn].invoke((Map rslt) {
-        if (rslt['results'] is Map) {
+        if (rslt['results'] is Map || rslt["error"] == null) {
           Map results = rslt['results'];
+
+          if (results == null) {
+            results = {};
+          }
+
           List row = [];
           List col = [];
 
@@ -430,7 +436,6 @@ const Map<String, String> intervalMap = const {
   "fiveseconds":"fiveSeconds",
   "onesecond":"oneSecond",
   "none":"none",
-
   "1y":"oneYear",
   "3n":"threeMonths",
   "1n":"oneMonth",
