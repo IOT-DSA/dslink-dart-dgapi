@@ -21,7 +21,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     if (!services.containsKey(conn)) {
       return new SimpleNode(path);
     }
-
+    
     var n = new DgApiNode(conn, path, this);
     n.rpath = n.path.substring(conn.length + 1);
 

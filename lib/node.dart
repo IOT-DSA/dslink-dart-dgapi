@@ -44,7 +44,7 @@ class DgApiNode extends SimpleNode {
     }
   }
 
-  RespSubscribeListener subscribe(callback(ValueUpdate), [int qos = 1]) {
+  RespSubscribeListener subscribe(callback(ValueUpdate), [int qos = 0]) {
     if (!watching) {
       provider.registerNode(conn, this);
       provider.services[conn].addWatch(updateDataValue, rewritePath(rpath));
@@ -66,7 +66,7 @@ class DgApiNode extends SimpleNode {
   }
 
   updateDataValue(Map m) {
-    updateValue(new ValueUpdate(m['value'], ts:m['lastUpdate']));
+    updateValue(new ValueUpdate(m['value'], ts: m['lastUpdate']));
     valueReady = true;
   }
 
@@ -80,6 +80,10 @@ class DgApiNode extends SimpleNode {
     }
 
     if (actName == 'getHistory') {
+      var rollup = params['Rollup'];
+      if (rollup == "none") {
+        rollup = "default";
+      }
       provider.services[conn].getHistory((Map rslt) {
         if (rslt['columns'] is List && rslt['rows'] is List) {
           List rows = rslt['rows'];
@@ -88,7 +92,7 @@ class DgApiNode extends SimpleNode {
         } else {
           onError(rslt['error']);
         }
-      }, rewritePath(paths.join("/")), params['Timerange'], mapInterval(params['Interval']), params['Rollup']);
+      }, rewritePath(paths.join("/")), params['Timerange'], mapInterval(params['Interval']), rollup);
     } else if (actName == 'dbQuery') {
     } else {
       provider.services[conn].invoke((Map rslt) {
@@ -155,8 +159,6 @@ class DgApiNode extends SimpleNode {
   }
 
   Stream<String> get listStream => listChangeController.stream;
-
-  StreamSubscription _listReqListener;
 
   bool _listing = false;
   bool listReady = false;
@@ -243,9 +245,9 @@ class DgApiNode extends SimpleNode {
   void listFinished() {
     if (node == null) {
       // node error? check if this is a action node from parent
-      var m = rewritePath(rpath);
-      checkActionName = m.substring(m.lastIndexOf("/"));
-      provider.services[conn].getNode(getParentNodeCallback, m);
+      var m = rewritePath(rpath).split("/");
+      checkActionName = m.removeLast();
+      provider.services[conn].getNode(getParentNodeCallback, m.join("/"));
       return;
     }
 
@@ -459,6 +461,7 @@ const Map<String, String> intervalMap = const {
   "5s":"fiveSeconds",
   "1s":"oneSecond",
 };
+
 String mapInterval(String input) {
   if (input == null) return 'default';
   input = input.toLowerCase();
@@ -467,5 +470,6 @@ String mapInterval(String input) {
   }
   return 'default';
 }
+
 SimpleNode _getHistoryNode = new SimpleNode('/')
   ..load({r'$is':'getHistory', r'$invokable':'read', r'$name': 'Get History'});
