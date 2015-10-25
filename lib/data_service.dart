@@ -195,6 +195,8 @@ class DGDataService {
       "subscription": "$subscriptionId"
     });
 
+    logger.fine("Send Request: ${reqString}");
+
     void onLoadError(String err) {
       for (var group in waitingList) {
         group.callback({'error': err});
@@ -240,6 +242,7 @@ class DGDataService {
   Map<String, DataCallback> watchs = new Map<String, DataCallback>();
 
   void addWatch(DataCallback callback, String path) {
+    logger.fine("Adding Watch to ${path}");
     if (watchs.containsKey(path)) {
       logger.severe('DGDataService watch added twice');
     }
@@ -257,7 +260,7 @@ class DGDataService {
     }
 
     if (_watchTimer == null) {
-      _watchTimer = new Timer.periodic(const Duration(milliseconds:500), pollSubscription);
+      _watchTimer = new Timer.periodic(const Duration(milliseconds: 500), pollSubscription);
     }
   }
 
@@ -291,12 +294,13 @@ class DGDataService {
       Map m = {
         "method": "Subscribe",
         "name": subscriptionId,
-        "paths":toWatch
+        "paths": toWatch
       };
       toWatch = [];
       subscribeToken = new QueryToken(m, subscriptionCallback);
       sendRequest(subscribeToken);
     }
+
     if (!toNotWatch.isEmpty) {
       Map m = {
         "method": "Unsubscribe",
@@ -415,6 +419,7 @@ class DGDataServiceAsync extends DGDataService {
 
   @override
   void doSendRequest() {
+    prepareWatch();
     _pendingDoSendRequest = false;
     if (_isPolling) {
       return;
@@ -436,6 +441,8 @@ class DGDataServiceAsync extends DGDataService {
       "subscription": DGDataService.subscriptionId
     });
 
+    logger.fine("Send Request: ${reqString}");
+
     connection.loadString(dataUri, reqString).then((String result) {
       Map data;
       List responseData;
@@ -445,6 +452,7 @@ class DGDataServiceAsync extends DGDataService {
       } catch (e) {
         return;
       }
+      logger.fine("Got Response: ${responseData}");
       int len = responseData.length;
       for (var i = 0; i < len; ++i) {
         Map resData = responseData[i];

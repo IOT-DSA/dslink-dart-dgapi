@@ -86,19 +86,19 @@ Future<String> detectAndCorrectHost(String host) async {
     }
 
     if (response.body.contains("ENVYSION") || response.body.contains("ECLYPSE")) {
-      return uri.resolve("/eclypse/envysion/").toString();
+      return uri.toString();
     }
 
     if ((response.body.contains("DGBox") || response.body.contains("DGBOX")) ||
         (response.headers["x-location"] != null &&
             response.headers["x-location"].contains("dgbox"))) {
-      return uri.resolve("/dglux5/").toString();
+      return uri.toString();
     }
   }
 
   if (response.body.contains("/enteliweb/")) {
     var uri = Uri.parse(host);
-    return uri.resolve("/enteliweb/enteliviz5/app/").toString();
+    return uri.toString();
   }
 
   if (server.contains("Niagara") || server.contains("Coyote")) {

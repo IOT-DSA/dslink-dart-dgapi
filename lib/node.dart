@@ -38,6 +38,10 @@ class DgApiNode extends SimpleNode {
         x = "/";
       }
 
+      if (x.contains("%2b")) {
+        return x.replaceAll("%2b", "+");
+      }
+
       return x;
     } else {
       return "slot:${x}";
@@ -304,6 +308,10 @@ class DgApiNode extends SimpleNode {
           name = n.replaceFirst(":", "%3A").replaceAll("/", "%2F");
         } else {
           name = path.split("/").last.replaceAll("slot:", "");
+        }
+
+        if (name.contains("+")) {
+          name = name.replaceAll("+", "%2b");
         }
 
 /*        if (n["icon"] is String) {

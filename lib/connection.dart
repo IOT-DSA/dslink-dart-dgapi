@@ -184,6 +184,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       sessionStr = await loadString(configUri.resolve("..").resolve(config['sessionUrl']), null, null, true);
       niagara = false;
     }
+
     Map session = JSON.decode(sessionStr);
 
     if (!setup) {
