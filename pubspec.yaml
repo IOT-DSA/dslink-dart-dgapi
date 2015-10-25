@@ -7,3 +7,4 @@ dependencies:
   crypto: any
   dslink:
     git: git://github.com/IOT-DSA/sdk-dslink-dart.git
+  http: "^0.11.3+2"

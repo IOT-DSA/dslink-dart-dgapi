@@ -10,7 +10,8 @@ abstract class IOldApiConnection {
   DGDataService get service;
 }
 
-HttpClient loader = new HttpClient();
+HttpClient loader = new HttpClient()
+  ..badCertificateCallback = (a, b, c) => true;
 
 class OldApiBaseAuthConnection implements IOldApiConnection {
   final String serverUrl;
