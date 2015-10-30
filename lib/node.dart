@@ -100,7 +100,7 @@ class DgApiNode extends SimpleNode {
     } else if (actName == 'dbQuery') {
     } else {
       provider.services[conn].invoke((Map rslt) {
-        if (rslt['results'] is Map || rslt["error"] == null) {
+        if (rslt['results'] is Map || rslt["error"] == null || rslt['result'] is Map) {
           Map results = rslt['results'];
 
           if (results == null) {
@@ -112,15 +112,33 @@ class DgApiNode extends SimpleNode {
 
           if (results.length == 1 && results[results.keys.first] is Map && results[results.keys.first].containsKey("columns")) {
             var rx = results[results.keys.first];
-            response.updateStream(rx["rows"], columns: rx["columns"], streamStatus: StreamStatus.closed);
+            response.updateStream(rx["rows"], columns: rx["columns"],
+                streamStatus: StreamStatus.closed);
+          } else if (rslt["result"] is Map) { // Simple Table Implementation
+            var r = rslt["result"];
+            if (r["columns"] is! List || r["rows"] is! List) {
+              onError("Columns or rows does not exist.");
+            } else {
+              col = r["columns"].map((x) {
+                if (x is Map && x["rawName"] is String) {
+                  return {
+                    "name": x["rawName"],
+                    "type": x["type"]
+                  };
+                }
+                return x;
+              }).toList();
+              row = r["rows"];
+              response.updateStream(row, columns: col, streamStatus: StreamStatus.closed);
+            }
           } else {
             results.forEach((k, v) {
               if (v is String || k == null) {
-                col.add({'name':k, 'type':'string'});
+                col.add({'name': k, 'type':'string'});
               } else if (v is num) {
-                col.add({'name':k, 'type':'number'});
+                col.add({'name': k, 'type':'number'});
               } else if (v is bool) {
-                col.add({'name':k, 'type':'bool'});
+                col.add({'name': k, 'type':'bool'});
               } else {
                 return;
               }
@@ -396,6 +414,10 @@ class DgSimpleActionNode extends SimpleNode {
         configs[r"$result"] = "values";
       }
       configs[r'$columns'] = columns;
+    }
+
+    if (action['return'] == 'table') {
+      configs[r"$result"] = "table";
     }
   }
 }
