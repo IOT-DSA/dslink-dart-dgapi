@@ -151,7 +151,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
     Map config;
     try {
-      config = JSON.decode(configStr);
+      config = const JsonDecoder().convert(configStr);
     } catch (e) {
       config = {
         "indexUrl": "index.html",
@@ -185,7 +185,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       niagara = false;
     }
 
-    Map session = JSON.decode(sessionStr);
+    Map session = const JsonDecoder().convert(sessionStr);
 
     if (!setup) {
       setup = true;

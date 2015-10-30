@@ -144,7 +144,7 @@ class DGDataService {
   Future<List<String>> listDatabases() async {
     try {
       var result = await connection.loadString(Uri.parse(dbUrl + "?op=list"));
-      return JSON.decode(result);
+      return const JsonDecoder().convert(result);
     } catch (e) {
       return [];
     }
@@ -157,7 +157,7 @@ class DGDataService {
     try {
       var uri = Uri.parse(dbUrl + "?db=${db}&query=${query}");
       var result = await connection.loadString(uri);
-      return JSON.decode(result);
+      return const JsonDecoder().convert(result);
     } catch (e) {
       return {
         "columns": [
@@ -190,12 +190,12 @@ class DGDataService {
     List<QueryTokenGroup> waitingList = pendingReqList;
     pendingReqList = null;
 
-    String reqString = JSON.encode({
+    String reqString = const JsonEncoder().convert({
       "requests": waitingList.map((group) => group.request).toList(),
       "subscription": "$subscriptionId"
     });
 
-    logger.fine("Send Request: ${reqString}");
+    logger.finest("Send Request: ${reqString}");
 
     void onLoadError(String err) {
       for (var group in waitingList) {
@@ -205,7 +205,8 @@ class DGDataService {
     List responseData;
     try {
       String str = await connection.loadString(dataUri, reqString);
-      Map data = JSON.decode(str);
+      Map data = const JsonDecoder().convert(str);
+      logger.finest("Got Response: ${data}");
       responseData = data['responses'];
     } catch (e) {
       onLoadError(e.toString());
@@ -215,6 +216,7 @@ class DGDataService {
       onLoadError("response length doesn't match request length");
       return;
     }
+
     int len = responseData.length;
     for (int i = 0; i < len; ++i) {
       Object resData = responseData[i];
@@ -242,7 +244,7 @@ class DGDataService {
   Map<String, DataCallback> watchs = new Map<String, DataCallback>();
 
   void addWatch(DataCallback callback, String path) {
-    logger.fine("Adding Watch to ${path}");
+    logger.finest("Adding Watch to ${path}");
     if (watchs.containsKey(path)) {
       logger.severe('DGDataService watch added twice');
     }
@@ -436,23 +438,23 @@ class DGDataServiceAsync extends DGDataService {
       }
     }
     pendingReqList = null;
-    String reqString = JSON.encode({
+    String reqString = const JsonEncoder().convert({
       "requests": reqDatas,
       "subscription": DGDataService.subscriptionId
     });
 
-    logger.fine("Send Request: ${reqString}");
+    logger.finest("Send Request: ${reqString}");
 
     connection.loadString(dataUri, reqString).then((String result) {
       Map data;
       List responseData;
       try {
-        data = DsJson.decode(result);
+        data = const JsonDecoder().convert(result);
         responseData = data["responses"];
       } catch (e) {
         return;
       }
-      logger.fine("Got Response: ${responseData}");
+      logger.finest("Got Response: ${responseData}");
       int len = responseData.length;
       for (var i = 0; i < len; ++i) {
         Map resData = responseData[i];

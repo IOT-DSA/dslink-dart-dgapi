@@ -92,7 +92,7 @@ class DgApiNode extends SimpleNode {
         if (rslt['columns'] is List && rslt['rows'] is List) {
           List rows = rslt['rows'];
           List cols = rslt['columns'];
-          response.updateStream(rows, columns:cols, streamStatus: StreamStatus.closed);
+          response.updateStream(rows, columns: cols, streamStatus: StreamStatus.closed);
         } else {
           onError(rslt['error']);
         }
