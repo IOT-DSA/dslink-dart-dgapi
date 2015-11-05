@@ -14,12 +14,14 @@ HttpClient loader = new HttpClient()
   ..badCertificateCallback = (a, b, c) => true;
 
 class OldApiBaseAuthConnection implements IOldApiConnection {
+
   final String serverUrl;
   final String username;
   final String password;
   Uri serverUri;
   String authString;
   DGDataService service;
+  bool forceUseSync = false;
   bool basicAuth = true;
 
   OldApiBaseAuthConnection(this.serverUrl, this.username, this.password) {
@@ -90,7 +92,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     });
   }
 
-  Utf8Decoder decoder = new Utf8Decoder(allowMalformed: true);
+  Utf8Decoder decoder = const Utf8Decoder(allowMalformed: true);
 
   void authRequest(HttpClientRequest req) {
     if (basicAuth) {
@@ -213,7 +215,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       if (cn != null) {
         var conns = cn.split(",");
 
-        if (conns.contains("async")) {
+        if (conns.contains("async") && !forceUseSync) {
           useAsyncConn();
         } else {
           useSyncConn();

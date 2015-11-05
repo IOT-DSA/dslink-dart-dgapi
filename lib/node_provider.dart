@@ -33,6 +33,8 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       if (nodes.containsKey("/${conn}/Delete_Connection")) {
         n.children["Delete_Connection"] = nodes["/${conn}/Delete_Connection"];
       }
+
+      nodes[path] = n;
     }
 
     return n;

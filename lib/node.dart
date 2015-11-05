@@ -62,7 +62,7 @@ class DgApiNode extends SimpleNode {
     if (watching && callbacks.isEmpty) {
       provider.services[conn].removeWatch(updateDataValue, rewritePath(rpath));
       watching = false;
-      if (!_listing) {
+      if (!_listing && path != "/${conn}") {
         provider.unregisterNode(this);
       }
       valueReady = false;
@@ -170,38 +170,28 @@ class DgApiNode extends SimpleNode {
     return map;
   }
 
-  BroadcastStreamController<String> _listChangeController;
-
-  BroadcastStreamController<String> get listChangeController {
-    if (_listChangeController == null) {
-      _listChangeController = new BroadcastStreamController<String>(
-          _onStartListListen, _onAllListCancel);
-    }
-    return _listChangeController;
-  }
-
-  Stream<String> get listStream => listChangeController.stream;
-
   bool _listing = false;
   bool listReady = false;
 
-  void _onStartListListen() {
+  void onStartListListen() {
     _listing = true;
     listNode();
 
     provider.registerNode(conn, this);
   }
 
-  void _onAllListCancel() {
+  void onAllListCancel() {
     _listing = false;
-    if (callbacks.isEmpty) {
+    if (callbacks.isEmpty && path != "/${conn}") {
       provider.unregisterNode(this);
     }
     listReady = false;
   }
 
   void listNode() {
-    if (!_listing) return;
+    if (!_listing) {
+      return;
+    }
 
     _nodeReady = false;
     _childrenReady = false;
@@ -225,7 +215,7 @@ class DgApiNode extends SimpleNode {
       node = null;
     }
 
-    if (node != null && node["hasChildren"] == true) {
+    if (node != null && (node["hasChildren"] == true)) {
       provider.services[conn].getChildren(getChildrenCallback, rewritePath(rpath));
     } else {
       _childrenReady = true;
@@ -278,6 +268,7 @@ class DgApiNode extends SimpleNode {
     if (path != "/${conn}") {
       configs[r"$name"] = node["name"];
     }
+
     if (node['type'] is String) {
       configs[r'$type'] = node['type'];
     }

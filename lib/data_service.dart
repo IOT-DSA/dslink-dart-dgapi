@@ -460,7 +460,10 @@ class DGDataServiceAsync extends DGDataService {
         Map resData = responseData[i];
 
         if (resData["reqId"] != null) {
-          int id = resData["reqId"];
+          var id = resData["reqId"];
+          if (id is String) {
+            id = int.parse(id);
+          }
           if (id > 0) {
             QueryTokenGroup group = waitingIds[id];
             if (group == null) {
