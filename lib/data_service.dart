@@ -195,7 +195,9 @@ class DGDataService {
       "subscription": "$subscriptionId"
     });
 
-    logger.finest("Send Request: ${reqString}");
+    if (logger.isLoggable(Level.FINEST)) {
+      logger.finest("Send Request: ${reqString}");
+    }
 
     void onLoadError(String err) {
       for (var group in waitingList) {
@@ -206,7 +208,9 @@ class DGDataService {
     try {
       String str = await connection.loadString(dataUri, reqString);
       Map data = const JsonDecoder().convert(str);
-      logger.finest("Got Response: ${data}");
+      if (logger.isLoggable(Level.FINEST)) {
+        logger.finest("Got Response: ${data}");
+      }
       responseData = data['responses'];
     } catch (e) {
       onLoadError(e.toString());
@@ -443,7 +447,9 @@ class DGDataServiceAsync extends DGDataService {
       "subscription": DGDataService.subscriptionId
     });
 
-    logger.finest("Send Request: ${reqString}");
+    if (logger.isLoggable(Level.FINEST)) {
+      logger.finest("Send Request: ${reqString}");
+    }
 
     connection.loadString(dataUri, reqString).then((String result) {
       Map data;
@@ -454,7 +460,11 @@ class DGDataServiceAsync extends DGDataService {
       } catch (e) {
         return;
       }
-      logger.finest("Got Response: ${responseData}");
+
+      if (logger.isLoggable(Level.FINEST)) {
+        logger.finest("Got Response: ${responseData}");
+      }
+
       int len = responseData.length;
       for (var i = 0; i < len; ++i) {
         Map resData = responseData[i];
