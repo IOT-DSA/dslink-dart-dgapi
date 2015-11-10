@@ -220,7 +220,8 @@ class DgApiNode extends SimpleNode {
     _nodeReady = false;
     _childrenReady = false;
 
-    if (!provider.services[conn].actionHints.contains(rpath)) {
+    if (!provider.services[conn].actionHints.contains(rpath) &&
+        (niagara ? !rpath.endsWith("/getHistory") : true)) {
       provider.services[conn].getNode(getNodeCallback, rewritePath(rpath));
     } else {
       List paths = rewritePath(rpath).split('/');
