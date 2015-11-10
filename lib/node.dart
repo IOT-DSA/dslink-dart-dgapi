@@ -29,6 +29,11 @@ class DgApiNode extends SimpleNode {
   }
 
   String rewritePath(String x) {
+    var out = _rewritePath(x);
+    return out;
+  }
+
+  String _rewritePath(String x) {
     if (x.contains("definition%3A")) {
       x = x.replaceAll("/definition%3A", "|definition:").replaceAll("%2F", "/");
     }
@@ -44,7 +49,25 @@ class DgApiNode extends SimpleNode {
 
       return x;
     } else {
-      return "slot:${x}";
+      if (x == "") {
+        return "/";
+      } else {
+        var split = x.split("/");
+        var withoutBegin = split.length > 1 ? split.skip(2).join("/") : "";
+        if (x.startsWith("/History")) {
+          if (!withoutBegin.startsWith("/")) {
+            withoutBegin = "/${withoutBegin}";
+          }
+          return "history:${withoutBegin}";
+        } else if (x.startsWith("/Config")) {
+          if (!withoutBegin.startsWith("/")) {
+            withoutBegin = "/${withoutBegin}";
+          }
+          return "slot:${withoutBegin}";
+        } else {
+          return x;
+        }
+      }
     }
   }
 
@@ -79,8 +102,8 @@ class DgApiNode extends SimpleNode {
     String actName = paths.removeLast();
 
     void onError(String str) {
-      // TODO: implement error
-      response.close(new DSError('serverError'));
+      var error = new DSError('serverError', msg: str);
+      response.close(error);
     }
 
     if (actName == 'getHistory') {
@@ -88,6 +111,7 @@ class DgApiNode extends SimpleNode {
       if (rollup == "none") {
         rollup = "default";
       }
+      var invokeTarget = rewritePath(paths.join("/"));
       provider.services[conn].getHistory((Map rslt) {
         if (rslt['columns'] is List && rslt['rows'] is List) {
           List rows = rslt['rows'];
@@ -96,7 +120,7 @@ class DgApiNode extends SimpleNode {
         } else {
           onError(rslt['error']);
         }
-      }, rewritePath(paths.join("/")), params['Timerange'], mapInterval(params['Interval']), rollup);
+      }, invokeTarget, params['Timerange'], mapInterval(params['Interval']), rollup);
     } else if (actName == 'dbQuery') {
     } else {
       provider.services[conn].invoke((Map rslt) {
@@ -201,7 +225,16 @@ class DgApiNode extends SimpleNode {
     } else {
       List paths = rewritePath(rpath).split('/');
       checkActionName = paths.removeLast();
-      provider.services[conn].getNode(getParentNodeCallback, paths.join('/'));
+
+      if (checkActionName == "getHistory") {
+        configs.addAll(getHistorySpec);
+        listReady = true;
+        _nodeReady = true;
+        _childrenReady = true;
+        listChangeController.add(r'$is');
+      } else {
+        provider.services[conn].getNode(getParentNodeCallback, paths.join('/'));
+      }
     }
   }
 
@@ -215,7 +248,7 @@ class DgApiNode extends SimpleNode {
       node = null;
     }
 
-    if (node != null && (node["hasChildren"] == true)) {
+    if (node != null && ((node["hasChildren"] == true) || (niagara && node["path"] == "/"))) {
       provider.services[conn].getChildren(getChildrenCallback, rewritePath(rpath));
     } else {
       _childrenReady = true;
@@ -265,6 +298,7 @@ class DgApiNode extends SimpleNode {
 
     listReady = true;
     configs[r'$is'] = 'node';
+
     if (path != "/${conn}") {
       configs[r"$name"] = node["name"];
     }
@@ -316,7 +350,7 @@ class DgApiNode extends SimpleNode {
 
           name = n.replaceFirst(":", "%3A").replaceAll("/", "%2F");
         } else {
-          name = path.split("/").last.replaceAll("slot:", "");
+          name = path.split("/").last.replaceAll("slot:", "Config").replaceAll("history:", "History");
         }
 
         if (name.contains("+")) {
@@ -337,12 +371,17 @@ class DgApiNode extends SimpleNode {
 
         n.remove("icon");
 
+        if (name == "") {
+          name = "Config";
+        }
+
         children[name] = new SimpleChildNode(n);
       }
     }
 
     if (node['hasHistory'] == true) {
-      children['getHistory'] = _getHistoryNode;
+      children["getHistory"] = new SimpleNode(path + "/getHistory")..load(getHistorySpec);
+      provider.services[conn].actionHints.add("${path}/getHistory");
       configs[r"$hasHistory"] = true;
     }
 
@@ -358,7 +397,8 @@ class DgApiNode extends SimpleNode {
       if (checkActionName == 'getHistory') {
         if (pnode['hasHistory'] == true) {
           listReady = true;
-          configs.addAll(_getHistoryNode.configs);
+          configs.addAll(getHistorySpec);
+          listChangeController.add(r'$is');
         }
       } else if (checkActionName == 'dbQuery') {
       } else if (pnode['actions'] is List) {
@@ -382,7 +422,10 @@ class DgSimpleActionNode extends SimpleNode {
   DgSimpleActionNode(Map action) : super('/') {
     configs[r'$is'] = 'node';
     configs[r'$invokable'] = 'read';
-    configs[r"$name"] = action["name"].replaceAll("slot:", "").replaceAll("+", " ");
+    configs[r"$name"] = action["name"]
+        .replaceAll("slot:", "")
+        .replaceAll("+", " ")
+        .replaceAll("history:", "");
     if (action['parameters'] is List) {
       Map params = {};
       for (Map param in action['parameters']) {
@@ -420,7 +463,10 @@ class SimpleChildNode extends SimpleNode {
       configs[r'$type'] = node['type'];
     }
 
-    configs[r"$name"] = node["name"].replaceAll("slot:", "").replaceAll("+", " ");
+    configs[r"$name"] = node["name"]
+        .replaceAll("slot:", "")
+        .replaceAll("+", " ")
+        .replaceAll("history:", "");
     if (node['enum'] is String) {
       configs[r'$type'] = 'enum[${node['enum']}]';
     }
@@ -486,11 +532,15 @@ const Map<String, String> intervalMap = const {
 String mapInterval(String input) {
   if (input == null) return 'default';
   input = input.toLowerCase();
-  if (intervalMap.containsKey(input)){
+  if (intervalMap.containsKey(input)) {
     return intervalMap[input];
   }
   return 'default';
 }
 
-SimpleNode _getHistoryNode = new SimpleNode('/')
-  ..load({r'$is':'getHistory', r'$invokable':'read', r'$name': 'Get History'});
+final Map getHistorySpec = {
+  r"$is":"getHistory",
+  r"$invokable":"read",
+  r"$name": "Get History"
+};
+
