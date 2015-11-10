@@ -54,12 +54,12 @@ class DgApiNode extends SimpleNode {
       } else {
         var split = x.split("/");
         var withoutBegin = split.length > 1 ? split.skip(2).join("/") : "";
-        if (x.startsWith("/History")) {
+        if (x.startsWith("/history")) {
           if (!withoutBegin.startsWith("/")) {
             withoutBegin = "/${withoutBegin}";
           }
           return "history:${withoutBegin}";
-        } else if (x.startsWith("/Config")) {
+        } else if (x.startsWith("/config")) {
           if (!withoutBegin.startsWith("/")) {
             withoutBegin = "/${withoutBegin}";
           }
@@ -350,7 +350,7 @@ class DgApiNode extends SimpleNode {
 
           name = n.replaceFirst(":", "%3A").replaceAll("/", "%2F");
         } else {
-          name = path.split("/").last.replaceAll("slot:", "Config").replaceAll("history:", "History");
+          name = path.split("/").last.replaceAll("slot:", "config").replaceAll("history:", "history");
         }
 
         if (name.contains("+")) {
@@ -372,7 +372,7 @@ class DgApiNode extends SimpleNode {
         n.remove("icon");
 
         if (name == "") {
-          name = "Config";
+          name = "config";
         }
 
         children[name] = new SimpleChildNode(n);
@@ -423,9 +423,9 @@ class DgSimpleActionNode extends SimpleNode {
     configs[r'$is'] = 'node';
     configs[r'$invokable'] = 'read';
     configs[r"$name"] = action["name"]
-        .replaceAll("slot:", "")
+        .replaceAll("slot:", "config")
         .replaceAll("+", " ")
-        .replaceAll("history:", "");
+        .replaceAll("history:", "history");
     if (action['parameters'] is List) {
       Map params = {};
       for (Map param in action['parameters']) {
@@ -464,9 +464,9 @@ class SimpleChildNode extends SimpleNode {
     }
 
     configs[r"$name"] = node["name"]
-        .replaceAll("slot:", "")
+        .replaceAll("slot:", "config")
         .replaceAll("+", " ")
-        .replaceAll("history:", "");
+        .replaceAll("history:", "history");
     if (node['enum'] is String) {
       configs[r'$type'] = 'enum[${node['enum']}]';
     }
