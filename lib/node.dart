@@ -58,7 +58,16 @@ class DgApiNode extends SimpleNode {
           if (!withoutBegin.startsWith("/")) {
             withoutBegin = "/${withoutBegin}";
           }
-          return "history:${withoutBegin}";
+
+          if (withoutBegin.startsWith("/_default")) {
+            withoutBegin = "//" + withoutBegin.substring(9);
+            if (!withoutBegin.startsWith("///")) {
+              withoutBegin = "/" + withoutBegin;
+            }
+          }
+
+          var historyPath = "history:${withoutBegin}";
+          return historyPath;
         } else if (x.startsWith("/config")) {
           if (!withoutBegin.startsWith("/")) {
             withoutBegin = "/${withoutBegin}";
@@ -376,6 +385,10 @@ class DgApiNode extends SimpleNode {
           name = "config";
         }
 
+        if (n["path"] != null && n["path"] == "history:///") {
+          name = "_default";
+        }
+
         children[name] = new SimpleChildNode(n);
       }
     }
@@ -544,4 +557,3 @@ final Map getHistorySpec = {
   r"$invokable":"read",
   r"$name": "Get History"
 };
-
