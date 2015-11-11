@@ -30,6 +30,10 @@ class DgApiNode extends SimpleNode {
 
   String rewritePath(String x) {
     var out = _rewritePath(x);
+    out = Uri.decodeComponent(out);
+    if (const bool.fromEnvironment("debug.paths", defaultValue: false)) {
+      print("${x} => ${out}");
+    }
     return out;
   }
 
@@ -49,34 +53,7 @@ class DgApiNode extends SimpleNode {
 
       return x;
     } else {
-      if (x == "") {
-        return "/";
-      } else {
-        var split = x.split("/");
-        var withoutBegin = split.length > 1 ? split.skip(2).join("/") : "";
-        if (x.startsWith("/history")) {
-          if (!withoutBegin.startsWith("/")) {
-            withoutBegin = "/${withoutBegin}";
-          }
-
-          if (withoutBegin.startsWith("/_default")) {
-            withoutBegin = "//" + withoutBegin.substring(9);
-            if (!withoutBegin.startsWith("///")) {
-              withoutBegin = "/" + withoutBegin;
-            }
-          }
-
-          var historyPath = "history:${withoutBegin}";
-          return historyPath;
-        } else if (x.startsWith("/config")) {
-          if (!withoutBegin.startsWith("/")) {
-            withoutBegin = "/${withoutBegin}";
-          }
-          return "slot:${withoutBegin}";
-        } else {
-          return x;
-        }
-      }
+      return convertDsaToNiagara(x);
     }
   }
 
@@ -350,9 +327,12 @@ class DgApiNode extends SimpleNode {
     }
 */
 
+    String np = node["path"];
+    String rp = convertNiagaraToDsa(np);
+
     if (childrenNodes != null) {
-      for (Map n in childrenNodes) {
-        String path = n["path"];
+      for (Map no in childrenNodes) {
+        String path = no["path"];
         String name;
         if (path.contains("|definition:")) {
           var parts = path.split("|");
@@ -367,6 +347,55 @@ class DgApiNode extends SimpleNode {
           name = name.replaceAll("+", "%2b");
         }
 
+        if (niagara) {
+          String cp = no["path"];
+          var relp = cp.replaceAll(np + "/", "");
+          if (relp.startsWith("/")) {
+            relp = relp.substring(1);
+          }
+          relp = relp.replaceAll("/", "__SLASH__");
+          relp = relp.replaceAll("history:", "");
+          if (relp == "slot:__SLASH__") {
+            relp = "config";
+          }
+
+
+          if (relp.contains("|")) {
+            relp = "__OR__" + relp.split("|").skip(1).join("|");
+          }
+
+          name = relp;
+
+          if (path.startsWith("slot:") && name.startsWith("slot:")) {
+            name = name.substring(5);
+          }
+
+          if (path == "history:") {
+            name = "history";
+          }
+
+          if (path.startsWith("history://") && name.startsWith("__SLASH____SLASH__")) {
+            name = name.substring(9 * 2);
+          }
+
+          if (path.startsWith("history:/") && name.startsWith("__SLASH__")) {
+            name = name.substring(9);
+          }
+
+          if (path.startsWith("slot:/") && name.startsWith("__SLASH__")) {
+            name = name.substring(9);
+          }
+
+          if (no["path"] != null && no["path"] == "history:///") {
+            name = "_default";
+          }
+
+          if (path.startsWith("slot:") && np.startsWith("history:")) {
+            name = "__OR__${no['path']}";
+          }
+
+          name = Uri.encodeComponent(name);
+        }
 /*        if (n["icon"] is String) {
           var url = provider.services[conn].resolveIcon(node["icon"]);
           var uri = Uri.parse(url);
@@ -379,17 +408,9 @@ class DgApiNode extends SimpleNode {
           provider.icons[pn] = new IconModel(provider.services[conn], pn);
         }*/
 
-        n.remove("icon");
+        no.remove("icon");
 
-        if (name == "") {
-          name = "config";
-        }
-
-        if (n["path"] != null && n["path"] == "history:///") {
-          name = "_default";
-        }
-
-        children[name] = new SimpleChildNode(n);
+        children[name] = new SimpleChildNode(no);
       }
     }
 

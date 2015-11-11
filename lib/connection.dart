@@ -26,7 +26,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
   OldApiBaseAuthConnection(this.serverUrl, this.username, this.password) {
     serverUri = Uri.parse(serverUrl);
-    authString = CryptoUtils.bytesToBase64(UTF8.encode('$username:$password'));
+    authString = CryptoUtils.bytesToBase64(UTF8.encode("$username:$password"));
   }
 
   Future<String> loadString(Uri uri, [String post, String contentType, bool isAuthRelated = false]) async {
@@ -55,7 +55,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       return await loadString(uri, post, contentType);
     }
 
-    addCookie(resp.headers.value('set-cookie'));
+    addCookie(resp.headers.value("set-cookie"));
     var data = await resp.transform(decoder).join();
     return data;
   }
@@ -86,7 +86,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       return await loadBytes(uri, post, contentType);
     }
 
-    addCookie(resp.headers.value('set-cookie'));
+    addCookie(resp.headers.value("set-cookie"));
     return resp.fold([], (a, b) {
       return a..addAll(b);
     });
@@ -96,21 +96,21 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
   void authRequest(HttpClientRequest req) {
     if (basicAuth) {
-      req.headers.add('Authorization', 'Basic ${authString}');
+      req.headers.add("Authorization", "Basic ${authString}");
     }
 
     if (serverCookie != null) {
-      req.headers.add('cookie', serverCookie);
+      req.headers.add("cookie", serverCookie);
     }
-    req.headers.add('Accept-Charset', 'utf-8');
-    req.headers.add('Accept-Encoding', 'gzip, deflate');
+    req.headers.add("Accept-Charset", "utf-8");
+    req.headers.add("Accept-Encoding", "gzip, deflate");
   }
 
   String serverCookie;
 
   void addCookie(String cookie) {
     if (cookie != null) {
-      serverCookie = cookie.split(';').where((str) => !str.toLowerCase().contains('path=')).join(';');
+      serverCookie = cookie.split(";").where((str) => !str.toLowerCase().contains("path=")).join(";");
     }
   }
 
@@ -122,7 +122,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
   }
 
   Future<bool> login() async {
-    Uri configUri = serverUri.resolve('dgconfig.json');
+    Uri configUri = serverUri.resolve("dgconfig.json");
     String configStr = "";
 
     try {
@@ -145,7 +145,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
           return false;
         }
 
-        configUri = serverUri.resolve('eclypse/envysion/dgconfig.json');
+        configUri = serverUri.resolve("eclypse/envysion/dgconfig.json");
         configStr = await loadString(configUri, null, null, true);
         niagara = false;
       }
@@ -168,7 +168,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
         "updateUrl": "update.html"
       };
     }
-    String sessionStr = await loadString(configUri.resolve(config['sessionUrl']));
+    String sessionStr = await loadString(configUri.resolve(config["sessionUrl"]));
 
     if (sessionStr.contains("DGBox version")) { // This is DGBox
       basicAuth = false;
@@ -183,7 +183,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
         return false;
       }
 
-      sessionStr = await loadString(configUri.resolve("..").resolve(config['sessionUrl']), null, null, true);
+      sessionStr = await loadString(configUri.resolve("..").resolve(config["sessionUrl"]), null, null, true);
       niagara = false;
     }
 
@@ -192,13 +192,13 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
     if (!setup) {
       setup = true;
 
-      var cn = session['connection'];
+      var cn = session["connection"];
 
       void useAsyncConn() {
         service = new DGDataServiceAsync(
           serverUrl,
-          configUri.resolve(config['dataUrl']).toString(),
-          configUri.resolve(config['dbUrl']).toString(),
+          configUri.resolve(config["dataUrl"]).toString(),
+          configUri.resolve(config["dbUrl"]).toString(),
           this
         );
       }
@@ -206,8 +206,8 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       void useSyncConn() {
         service = new DGDataService(
           serverUrl,
-          configUri.resolve(config['dataUrl']).toString(),
-          configUri.resolve(config['dbUrl']).toString(),
+          configUri.resolve(config["dataUrl"]).toString(),
+          configUri.resolve(config["dbUrl"]).toString(),
           this
         );
       }

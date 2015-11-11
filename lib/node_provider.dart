@@ -1,5 +1,79 @@
 part of dglux.dgapi;
 
+final RegExp FIX_PATH_REGEX = new RegExp(r"\/\/(.*)\/");
+
+String convertDsaToNiagara(String input) {
+  if (input == "") {
+    input = "/";
+  }
+
+  if (input.startsWith("/config")) {
+    var part = input.substring("/config".length);
+    return "slot:${part}";
+  } else if (input.startsWith("/history")) {
+    if (input == "/history") {
+      return "history:";
+    } else if (input == "/history/_default") {
+      return "history:///";
+    } else {
+      var p = input.substring("/history".length);
+      if (p.startsWith("/_default")) {
+        p = p.substring("/_default".length);
+      }
+      p = "history:${p}".replaceAll("__SLASH__", "/");
+      if (p.startsWith("history:__SLASH__")) {
+        p = "history:/" + p.substring(17);
+      }
+
+      if (p.startsWith("history:/history:/")) {
+        p = p.substring(9);
+      }
+
+      if (p.contains("/__OR__")) {
+        p = p.replaceAll("/__OR__", "|");
+      }
+
+      if (p.contains("|")) {
+        return p.split("|").skip(1).join("|");
+      }
+
+      return p;
+    }
+  } else if (input.startsWith("/")) {
+    return input;
+  }
+
+  throw new Exception("ERROR: ${input} is not supported.");
+}
+
+String convertNiagaraToDsa(String input) {
+  if (input.startsWith("slot:")) {
+    var real = input.split("/").skip(1).join("/");
+    var out = "/config";
+    out += real;
+    return out;
+  } else if (input.startsWith("history:")) {
+    if (input == "history:") {
+      return "/history";
+    } else if (input == "history:///") {
+      return "/history/_default";
+    } else if (input.startsWith("history:/") && !input.startsWith("history://")) {
+      var name = input.split("history:/").last;
+      return "/history/_default/${name}";
+    } else {
+      var path = "/history" + input.substring("history:/".length);
+      path = path.replaceAllMapped(FIX_PATH_REGEX, (m) {
+        return "/__SLASH__" + m.group(1) + "/";
+      });
+      return path;
+    }
+  } else {
+    return input;
+  }
+
+  throw new Exception("ERROR: ${input} is not supported.");
+}
+
 class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodeProvider {
   IPermissionManager permissions = new DummyPermissionManager();
   Map<String, DGDataService> services = {};
