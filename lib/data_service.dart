@@ -195,8 +195,8 @@ class DGDataService {
       "subscription": "$subscriptionId"
     });
 
-    if (logger.isLoggable(Level.FINEST)) {
-      logger.finest("Send Request: ${reqString}");
+    if (logger.isLoggable(Level.FINE)) {
+      logger.fine("Send Request: ${reqString}");
     }
 
     void onLoadError(String err) {
@@ -208,8 +208,8 @@ class DGDataService {
     try {
       String str = await connection.loadString(dataUri, reqString);
       Map data = const JsonDecoder().convert(str);
-      if (logger.isLoggable(Level.FINEST)) {
-        logger.finest("Got Response: ${data}");
+      if (logger.isLoggable(Level.FINE)) {
+        logger.fine("Got Response: ${data}");
       }
       responseData = data['responses'];
     } catch (e) {
@@ -244,15 +244,15 @@ class DGDataService {
     }
   }
 
-  Timer _watchTimer;
-  Map<String, DataCallback> watchs = new Map<String, DataCallback>();
+  Disposable _watchTimer;
+  Map<String, DataCallback> watchList = new Map<String, DataCallback>();
 
   void addWatch(DataCallback callback, String path) {
-    logger.finest("Adding Watch to ${path}");
-    if (watchs.containsKey(path)) {
+    logger.fine("Adding Watch to ${path}");
+    if (watchList.containsKey(path)) {
       logger.severe('DGDataService watch added twice');
     }
-    watchs[path] = callback;
+    watchList[path] = callback;
     if (toNotWatch.contains(path)) {
       toNotWatch.remove(path);
     } else {
@@ -266,15 +266,16 @@ class DGDataService {
     }
 
     if (_watchTimer == null) {
-      _watchTimer = new Timer.periodic(const Duration(milliseconds: 500), pollSubscription);
+      _watchTimer = Scheduler.safeEvery(const Duration(milliseconds: 500), pollSubscription);
     }
   }
 
   void removeWatch(DataCallback callback, String path) {
-    if (!watchs.containsKey(path) || watchs[path] != callback) {
+    if (!watchList.containsKey(path) || watchList[path] != callback) {
       logger.severe('DGDataService watch removed twice');
     }
-    watchs.remove(path);
+
+    watchList.remove(path);
     if (toWatch.contains(path)) {
       toWatch.remove(path);
     } else {
@@ -286,8 +287,9 @@ class DGDataService {
       }
       toNotWatch.add(path);
     }
-    if (watchs.isEmpty && _watchTimer != null) {
-      _watchTimer.cancel();
+
+    if (watchList.isEmpty && _watchTimer != null) {
+      _watchTimer.dispose();
       _watchTimer = null;
     }
   }
@@ -321,7 +323,7 @@ class DGDataService {
 
   QueryToken subscribeToken;
 
-  void pollSubscription(Timer t) {
+  void pollSubscription([Timer t]) {
     if (subscribeToken != null) {
       return;
     }
@@ -338,8 +340,8 @@ class DGDataService {
     if (data['values'] is List) {
       for (Map m in data['values']) {
         String path = m['path'];
-        if (path != null && watchs.containsKey(path)) {
-          watchs[path](m);
+        if (path != null && watchList.containsKey(path)) {
+          watchList[path](m);
         }
       }
     }
@@ -398,18 +400,18 @@ class DGDataServiceAsync extends DGDataService {
     super(hostUrl, dataUrl, dbUrl, connection);
 
   bool needTimer() {
-    return !watchs.isEmpty || !waitingIds.isEmpty || pendingReqList != null;
+    return !watchList.isEmpty || !waitingIds.isEmpty || pendingReqList != null;
   }
 
   Object watching;
 
-  void subscribeWatch(Timer t) {
+  void subscribeWatch([Timer t]) {
     doSendRequest();
   }
 
   void startSendRequest() {
     if (_watchTimer == null) {
-      _watchTimer = new Timer.periodic(const Duration(milliseconds: 500), subscribeWatch);
+      _watchTimer = Scheduler.safeEvery(const Duration(milliseconds: 500), subscribeWatch);
       if (!_pendingDoSendRequest) {
         _pendingDoSendRequest = true;
         DsTimer.callLater(doSendRequest);
@@ -447,8 +449,8 @@ class DGDataServiceAsync extends DGDataService {
       "subscription": DGDataService.subscriptionId
     });
 
-    if (logger.isLoggable(Level.FINEST)) {
-      logger.finest("Send Request: ${reqString}");
+    if (logger.isLoggable(Level.FINE)) {
+      logger.fine("Send Request: ${reqString}");
     }
 
     connection.loadString(dataUri, reqString).then((String result) {
@@ -461,8 +463,8 @@ class DGDataServiceAsync extends DGDataService {
         return;
       }
 
-      if (logger.isLoggable(Level.FINEST)) {
-        logger.finest("Got Response: ${responseData}");
+      if (logger.isLoggable(Level.FINE)) {
+        logger.fine("Got Response: ${responseData}");
       }
 
       int len = responseData.length;
@@ -509,7 +511,7 @@ class DGDataServiceAsync extends DGDataService {
 
   void checkClearTimer() {
     if (_watchTimer != null && !needTimer()) {
-      _watchTimer.cancel();
+      _watchTimer.dispose();
       _watchTimer = null;
     }
   }
