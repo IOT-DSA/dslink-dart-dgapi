@@ -94,7 +94,7 @@ class DgApiNode extends SimpleNode {
 
     if (actName == 'getHistory') {
       var rollup = params['Rollup'];
-      if (rollup == "none") {
+      if (rollup == "none" || rollup == "auto" || rollup == null) {
         rollup = "default";
       }
       var invokeTarget = rewritePath(paths.join("/"));
