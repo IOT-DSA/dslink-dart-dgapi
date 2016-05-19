@@ -109,7 +109,25 @@ class DgApiNode extends SimpleNode {
       }, invokeTarget, params['Timerange'], mapInterval(params['Interval']), rollup);
     } else if (actName == 'dbQuery') {
     } else {
+      var hasGotResult = false;
+      var serv = provider.services[conn];
+
+      var timer = new Timer(const Duration(seconds: 15), () {
+        if (!hasGotResult) {
+          logger.warning([
+            "Action invoke is taking a long time for ${path}."
+          ]);
+        }
+      });
+
       provider.services[conn].invoke((Map rslt) {
+        hasGotResult = true;
+
+        if (timer != null && timer.isActive) {
+          timer.cancel();
+          timer = null;
+        }
+
         if (rslt['results'] is Map || rslt["error"] == null || rslt['result'] is Map) {
           Map results = rslt['results'];
 
