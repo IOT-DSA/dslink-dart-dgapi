@@ -116,7 +116,7 @@ class DgApiNode extends SimpleNode {
         if (!hasGotResult) {
           logger.warning([
             "Action invoke is taking a long time for ${path}."
-          ]);
+          ].join("\n"));
         }
       });
 
