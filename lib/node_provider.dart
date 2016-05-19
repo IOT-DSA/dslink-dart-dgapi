@@ -95,7 +95,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     if (!services.containsKey(conn)) {
       return new SimpleNode(path);
     }
-    
+
     var n = new DgApiNode(conn, path, this);
     n.rpath = n.path.substring(conn.length + 1);
 
@@ -115,7 +115,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
   }
 
   @override
-  LocalNode getOrCreateNode(String path, [bool addToTree = true]) {
+  LocalNode getOrCreateNode(String path, [bool addToTree = true, bool init = true]) {
     return getNode(path);
   }
 
@@ -175,7 +175,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
 
       var deleteConnectionNode = new SimpleActionNode("/${conn}/Delete_Connection", (Map<String, dynamic> params) {
         if (connection.service._watchTimer != null) {
-          connection.service._watchTimer.cancel();
+          connection.service._watchTimer.dispose();
         }
 
         removeNode("/${conn}");

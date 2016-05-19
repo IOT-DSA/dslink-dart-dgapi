@@ -12,8 +12,6 @@ class QueryToken {
   Map request;
   DataCallback callback;
 
-  //Map meta;
-
   QueryToken(this.request, this.callback);
 
   void cancel() {
