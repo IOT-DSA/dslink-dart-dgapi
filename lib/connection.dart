@@ -193,7 +193,6 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       setup = true;
 
       var cn = session["connection"];
-
       void useAsyncConn() {
         service = new DGDataServiceAsync(
           serverUrl,
@@ -215,7 +214,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       if (cn != null) {
         var conns = cn.split(",");
 
-        if (conns.contains("async") && !forceUseSync) {
+        if (conns.contains("async")) {
           useAsyncConn();
         } else {
           useSyncConn();

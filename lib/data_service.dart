@@ -41,29 +41,29 @@ class QueryTokenGroup {
   }
 
   Map mergePartial(Map part) {
-    Map partial = part['partial'];
+    Map partial = part["partial"];
 
-    int from = partial['from'];
-    int total = partial['total'];
-    List items = partial['items'];
+    int from = partial["from"];
+    int total = partial["total"];
+    List items = partial["items"];
 
     if (partialResponse == null) {
-      part.remove('partial');
+      part.remove("partial");
       partialResponse = part;
       partialItems = items;
     } else {
       partialItems.addAll(items);
     }
     if (from + items.length >= total) {
-      String field = partial['field'];
-      List fields = field.split('.');
+      String field = partial["field"];
+      List fields = field.split(".");
       String lastField = fields.removeLast();
       Map target = partialResponse;
       for (String s in fields) {
         if (target[s] is Map) {
           target = target[s];
         } else {
-          print('Error, partial result field not found');
+          print("Error, partial result field not found");
           return partialResponse;
         }
       }
@@ -78,7 +78,7 @@ class DGDataService {
   bool niagara = false;
   static Math.Random _rnd = new Math.Random();
   static String subscriptionId = () {
-    return 'DG${_rnd.nextInt(999999)}${_rnd.nextInt(999999)}';
+    return "DG${_rnd.nextInt(999999)}${_rnd.nextInt(999999)}";
   }();
 
   String hostUrl;
@@ -98,11 +98,11 @@ class DGDataService {
 
   QueryTokenGroup getGroup(QueryToken token) {
     Map request = token.request;
-    String method = request['method'];
+    String method = request["method"];
     // merge these 2 type of requests into same group
     String key;
-    if (method == 'GetNode' || method == 'GetNodeList') {
-      key = '$method${request["path"]}';
+    if (method == "GetNode" || method == "GetNodeList") {
+      key = "$method${request["path"]}";
       QueryTokenGroup group = pendingReqList.firstWhere((token) => token.key == key, orElse:() => null);
       if (group != null) {
         group.tokens.add(token);
@@ -132,7 +132,7 @@ class DGDataService {
     // reuse another group;
     int reqId = _reqId++;
     group.rid = reqId;
-    group.request['reqId'] = reqId;
+    group.request["reqId"] = reqId;
 
     pendingReqList.add(group);
   }
@@ -199,7 +199,7 @@ class DGDataService {
 
     void onLoadError(String err) {
       for (var group in waitingList) {
-        group.callback({'error': err});
+        group.callback({"error": err});
       }
     }
     List responseData;
@@ -209,7 +209,7 @@ class DGDataService {
       if (logger.isLoggable(Level.FINE)) {
         logger.fine("Got Response: ${data}");
       }
-      responseData = data['responses'];
+      responseData = data["responses"];
     } catch (e) {
       onLoadError(e.toString());
       return;
@@ -237,7 +237,7 @@ class DGDataService {
         } catch (e) {
         }
       } else {
-        group.callback({'error': 'invalid response'});
+        group.callback({"error": "invalid response"});
       }
     }
   }
@@ -248,7 +248,7 @@ class DGDataService {
   void addWatch(DataCallback callback, String path) {
     logger.fine("Adding Watch to ${path}");
     if (watchList.containsKey(path)) {
-      logger.severe('DGDataService watch added twice');
+      logger.severe("DGDataService watch added twice");
     }
     watchList[path] = callback;
     if (toNotWatch.contains(path)) {
@@ -264,13 +264,16 @@ class DGDataService {
     }
 
     if (_watchTimer == null) {
-      _watchTimer = Scheduler.safeEvery(const Duration(milliseconds: 500), pollSubscription);
+      _watchTimer = Scheduler.safeEvery(
+        const Duration(milliseconds: 250),
+        pollSubscription
+      );
     }
   }
 
   void removeWatch(DataCallback callback, String path) {
     if (!watchList.containsKey(path) || watchList[path] != callback) {
-      logger.severe('DGDataService watch removed twice');
+      logger.severe("DGDataService watch removed twice");
     }
 
     watchList.remove(path);
@@ -335,9 +338,9 @@ class DGDataService {
 
   void subscriptionCallback(Map data) {
     subscribeToken = null;
-    if (data['values'] is List) {
-      for (Map m in data['values']) {
-        String path = m['path'];
+    if (data["values"] is List) {
+      for (Map m in data["values"]) {
+        String path = m["path"];
         if (path != null && watchList.containsKey(path)) {
           watchList[path](m);
         }
@@ -350,14 +353,35 @@ class DGDataService {
     {bool reuseReq: false, bool table: false, int streamCache: 0}) {
     Map m = {"method": "Invoke", "action": actionName};
     if (path != null) {
-      m['path'] = path;
+      m["path"] = path;
     }
     if (parameters != null) {
-      m['parameters'] = parameters;
+      m["parameters"] = parameters;
     } else {
-      m['parameters'] = const {};
+      m["parameters"] = const {};
     }
     var token = new QueryToken(m, callback);
+
+    connection.loadString(dataUri, const JsonEncoder().convert({
+      "requests": [m]
+    })).then((responseString) {
+      var json = const JsonDecoder().convert(responseString);
+      Map responseData = {};
+
+      if (json["responses"] is List) {
+        List resp = json["responses"];
+
+        if (resp.length > 0) {
+          var first = resp.first;
+          if (first is Map) {
+            responseData = first;
+          }
+        }
+      }
+
+      token.callback(responseData);
+    });
+
     sendRequest(token);
     return token;
   }
