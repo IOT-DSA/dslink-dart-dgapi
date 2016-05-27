@@ -350,7 +350,7 @@ class DGDataService {
 
   QueryToken invoke(
     DataCallback callback, String actionName, String path, Map parameters,
-    {bool reuseReq: false, bool table: false, int streamCache: 0}) {
+    {bool reuseReq: false, bool table: false, int streamCache: 0, bool first: true}) {
     Map m = {"method": "Invoke", "action": actionName};
     if (path != null) {
       m["path"] = path;
@@ -380,9 +380,16 @@ class DGDataService {
       }
 
       token.callback(responseData);
+    }).catchError((e, stack) {
+      if (first == true) {
+        logger.warning("First invoke attempt failed.", e, stack);
+        invoke(callback, actionName, path, parameters, first: false);
+      } else {
+        logger.warning("Failed to retry invoke.", e, stack);
+        token.callback({});
+      }
     });
 
-    sendRequest(token);
     return token;
   }
 

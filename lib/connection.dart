@@ -10,8 +10,12 @@ abstract class IOldApiConnection {
   DGDataService get service;
 }
 
-HttpClient loader = new HttpClient()
-  ..badCertificateCallback = (a, b, c) => true;
+HttpClient loader = () {
+  var client = new HttpClient();
+  client.badCertificateCallback = (a, b, c) => true;
+  client.maxConnectionsPerHost = 1024;
+  return client;
+}();
 
 class OldApiBaseAuthConnection implements IOldApiConnection {
 
