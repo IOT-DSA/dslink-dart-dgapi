@@ -103,7 +103,10 @@ class DGDataService {
     String key;
     if (method == "GetNode" || method == "GetNodeList") {
       key = "$method${request["path"]}";
-      QueryTokenGroup group = pendingReqList.firstWhere((token) => token.key == key, orElse:() => null);
+      QueryTokenGroup group = pendingReqList.firstWhere(
+        (token) => token.key == key,
+          orElse: () => null
+      );
       if (group != null) {
         group.tokens.add(token);
         return null;
@@ -441,7 +444,11 @@ class DGDataServiceAsync extends DGDataService {
 
   void startSendRequest() {
     if (_watchTimer == null) {
-      _watchTimer = Scheduler.safeEvery(const Duration(milliseconds: 250), subscribeWatch);
+      _watchTimer = Scheduler.safeEvery(
+        const Duration(milliseconds: 250),
+        subscribeWatch
+      );
+
       if (!_pendingDoSendRequest) {
         _pendingDoSendRequest = true;
         DsTimer.callLater(doSendRequest);
