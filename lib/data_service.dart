@@ -248,8 +248,9 @@ class DGDataService {
   void addWatch(DataCallback callback, String path) {
     logger.fine("Adding Watch to ${path}");
     if (watchList.containsKey(path)) {
-      logger.severe("DGDataService watch added twice");
+      logger.severe("DGDataService watch added twice for ${path}");
     }
+
     watchList[path] = callback;
     if (toNotWatch.contains(path)) {
       toNotWatch.remove(path);
@@ -273,7 +274,7 @@ class DGDataService {
 
   void removeWatch(DataCallback callback, String path) {
     if (!watchList.containsKey(path) || watchList[path] != callback) {
-      logger.severe("DGDataService watch removed twice");
+      logger.severe("DGDataService watch removed twice for ${path}");
     }
 
     watchList.remove(path);
