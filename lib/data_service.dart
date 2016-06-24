@@ -349,6 +349,10 @@ class DGDataService {
           watchList[path](m);
         }
       }
+    } else if (data['error'] is String && data['error'].startsWith('Unknown subscription')) {
+      print('Connection Lost, resend all subscription');
+      toWatch = this.watchList.keys.toList();
+      prepareWatch();
     }
   }
 
