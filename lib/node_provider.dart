@@ -268,35 +268,6 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
 
   @override
   void init([Map m, Map profiles]) {
-//    nodes["/sys/getIcon"] = sys.children[r"getIcon"] = new SimpleActionNode("/sys/getIcon", (Map<String, dynamic> params) async {
-//      var p = params["Path"];
-//
-//      if (icons.containsKey(p)) {
-//        var bytes = await icons[p].fetch();
-//        return {
-//          "Icon": ByteDataUtil.fromList(bytes)
-//        };
-//      } else {
-//        return {
-//          "Icon": ByteDataUtil.fromList([])
-//        };
-//      }
-//    }, this)..load({
-//      r"$invokable": "read",
-//      r"$columns": [
-//        {
-//          "name": "Icon",
-//          "type": "bytes"
-//        }
-//      ],
-//      r"$params": [
-//        {
-//          "name": "Path",
-//          "type": "string"
-//        }
-//      ]
-//    });
-
     if (m == null) return;
     var names = m.keys.where((it) => !it.startsWith(r"$") && it != "Add_Connection").toList();
     nx = names.length;
@@ -307,6 +278,14 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
 
       addConnection(n, url, username, password);
     }
+
+    setIconResolver((String path) async {
+      if (icons.containsKey(path)) {
+        var bytes = await icons[path].fetch();
+        return ByteDataUtil.fromList(bytes);
+      }
+      return null;
+    });
   }
 
   int ll = 0;
@@ -347,10 +326,11 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
 class IconModel {
   final DGDataService service;
   final String path;
+  final String url;
 
-  IconModel(this.service, this.path);
+  IconModel(this.service, this.path, this.url);
 
   Future<List<int>> fetch() async {
-    return await service.connection.loadBytes(Uri.parse(service.resolveIcon(path)));
+    return await service.connection.loadBytes(Uri.parse(url));
   }
 }

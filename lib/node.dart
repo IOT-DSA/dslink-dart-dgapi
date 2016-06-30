@@ -332,18 +332,16 @@ class DgApiNode extends SimpleNode {
       }
     }
 
-/*
     if (node["icon"] is String) {
       var url = provider.services[conn].resolveIcon(node["icon"]);
       var uri = Uri.parse(url);
       var hash = new MD5();
       hash.add(UTF8.encode(uri.toString()));
       var hashz = CryptoUtils.bytesToHex(hash.close());
-      var pn = "/dgapi/${hashz}";
-//      attributes[r"@icon"] = pn;
-      provider.icons[pn] = new IconModel(provider.services[conn], pn);
+      var pn = "dgapi/${hashz}";
+      attributes[r"@icon"] = pn;
+      provider.icons[pn] = new IconModel(provider.services[conn], pn, url);
     }
-*/
 
     String np = node["path"];
     String rp = convertNiagaraToDsa(np);
