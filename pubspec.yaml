@@ -1,10 +1,9 @@
 name: dslink_dgapi
 version: 0.0.1
-description: DSLink for Compatibility with the old DGAPI.
+description: DSLink for compatibility with the old DGAPI.
 environment:
-  sdk: '>=1.0.0 <2.0.0'
+  sdk: ">=1.0.0 <2.0.0"
 dependencies:
-  crypto: any
   dslink:
     git: https://github.com/IOT-DSA/sdk-dslink-dart.git
   http: "^0.11.3+2"

@@ -30,38 +30,48 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
   OldApiBaseAuthConnection(this.serverUrl, this.username, this.password) {
     serverUri = Uri.parse(serverUrl);
-    authString = CryptoUtils.bytesToBase64(UTF8.encode("$username:$password"));
+    authString = BASE64.encode(UTF8.encode("$username:$password"));
   }
 
-  Future<String> loadString(Uri uri, [String post, String contentType, bool isAuthRelated = false]) async {
-    HttpClientRequest req;
+  Future<String> loadString(Uri uri, [String post, String contentType, bool isAuthRelated = false, int retries = 0]) async {
+    try {
+      HttpClientRequest req;
 
-    if (post != null) {
-      req = await loader.postUrl(uri);
-    } else {
-      req = await loader.getUrl(uri);
+      if (post != null) {
+        req = await loader.postUrl(uri);
+      } else {
+        req = await loader.getUrl(uri);
+      }
+
+      authRequest(req);
+
+      if (contentType != null) {
+        req.headers.contentType = ContentType.parse(contentType);
+      }
+
+      if (post != null) {
+        req.add(UTF8.encode(post));
+      }
+
+      HttpClientResponse resp = await req.close();
+
+      if (resp.statusCode == HttpStatus.UNAUTHORIZED && !isAuthRelated) {
+        await login();
+        return await loadString(uri, post, contentType);
+      }
+
+      addCookie(resp.headers.value("set-cookie"));
+      var data = await resp.transform(decoder).join();
+      return data;
+    } catch (e) {
+      if (retries > 2) {
+        rethrow;
+      } else {
+        return new Future.delayed(const Duration(seconds: 1)).then((_) async {
+          return await loadString(uri, post, contentType, isAuthRelated, retries + 1);
+        });
+      }
     }
-
-    authRequest(req);
-
-    if (contentType != null) {
-      req.headers.contentType = ContentType.parse(contentType);
-    }
-
-    if (post != null) {
-      req.add(UTF8.encode(post));
-    }
-
-    HttpClientResponse resp = await req.close();
-
-    if (resp.statusCode == HttpStatus.UNAUTHORIZED && !isAuthRelated) {
-      await login();
-      return await loadString(uri, post, contentType);
-    }
-
-    addCookie(resp.headers.value("set-cookie"));
-    var data = await resp.transform(decoder).join();
-    return data;
   }
 
   Future<List<int>> loadBytes(Uri uri, [String post, String contentType, bool isAuthRelated = false]) async {
