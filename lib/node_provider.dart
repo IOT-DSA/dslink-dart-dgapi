@@ -70,8 +70,6 @@ String convertNiagaraToDsa(String input) {
   } else {
     return input;
   }
-
-  throw new Exception("ERROR: ${input} is not supported.");
 }
 
 class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodeProvider {
@@ -269,7 +267,9 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
   @override
   void init([Map m, Map profiles]) {
     if (m == null) return;
-    var names = m.keys.where((it) => !it.startsWith(r"$") && it != "Add_Connection").toList();
+    var names = m.keys.where((it) => !it.startsWith(r"$") &&
+      it != "Add_Connection"
+    ).toList();
     nx = names.length;
     for (var n in names) {
       var url = m[n][r"$$dgapi_url"];

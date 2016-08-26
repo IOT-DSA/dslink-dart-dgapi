@@ -83,7 +83,9 @@ class DgApiNode extends SimpleNode {
     valueReady = true;
   }
 
-  InvokeResponse invoke(Map params, Responder responder, InvokeResponse response, LocalNode parentNode, [int maxPermission = Permission.CONFIG]) {
+  InvokeResponse invoke(Map params, Responder responder,
+      InvokeResponse response, LocalNode parentNode,
+      [int maxPermission = Permission.CONFIG]) {
     List paths = rpath.split('/');
     String actName = paths.removeLast();
 
@@ -102,21 +104,20 @@ class DgApiNode extends SimpleNode {
         if (rslt['columns'] is List && rslt['rows'] is List) {
           List rows = rslt['rows'];
           List cols = rslt['columns'];
-          response.updateStream(rows, columns: cols, streamStatus: StreamStatus.closed);
+          response.updateStream(rows,
+              columns: cols, streamStatus: StreamStatus.closed);
         } else {
           onError(rslt['error']);
         }
-      }, invokeTarget, params['Timerange'], mapInterval(params['Interval']), rollup);
-    } else if (actName == 'dbQuery') {
-    } else {
+      }, invokeTarget, params['Timerange'], mapInterval(params['Interval']),
+          rollup);
+    } else if (actName == 'dbQuery') {} else {
       var hasGotResult = false;
-      var serv = provider.services[conn];
 
       var timer = new Timer(const Duration(seconds: 15), () {
         if (!hasGotResult) {
-          logger.warning([
-            "Action invoke is taking a long time for ${path}."
-          ].join("\n"));
+          logger.warning(
+              ["Action invoke is taking a long time for ${path}."].join("\n"));
         }
       });
 
@@ -128,7 +129,9 @@ class DgApiNode extends SimpleNode {
           timer = null;
         }
 
-        if (rslt['results'] is Map || rslt["error"] == null || rslt['result'] is Map) {
+        if (rslt['results'] is Map ||
+            rslt["error"] == null ||
+            rslt['result'] is Map) {
           Map results = rslt['results'];
 
           if (results == null) {
@@ -138,41 +141,43 @@ class DgApiNode extends SimpleNode {
           List row = [];
           List col = [];
 
-          if (results.length == 1 && results[results.keys.first] is Map && results[results.keys.first].containsKey("columns")) {
+          if (results.length == 1 &&
+              results[results.keys.first] is Map &&
+              results[results.keys.first].containsKey("columns")) {
             var rx = results[results.keys.first];
-            response.updateStream(rx["rows"], columns: rx["columns"],
-                streamStatus: StreamStatus.closed);
-          } else if (rslt["result"] is Map) { // Simple Table Implementation
+            response.updateStream(rx["rows"],
+                columns: rx["columns"], streamStatus: StreamStatus.closed);
+          } else if (rslt["result"] is Map) {
+            // Simple Table Implementation
             var r = rslt["result"];
             if (r["columns"] is! List || r["rows"] is! List) {
               onError("Columns or rows does not exist.");
             } else {
               col = r["columns"].map((x) {
                 if (x is Map && x["rawName"] is String) {
-                  return {
-                    "name": x["rawName"],
-                    "type": x["type"]
-                  };
+                  return {"name": x["rawName"], "type": x["type"]};
                 }
                 return x;
               }).toList();
               row = r["rows"];
-              response.updateStream(row, columns: col, streamStatus: StreamStatus.closed);
+              response.updateStream(row,
+                  columns: col, streamStatus: StreamStatus.closed);
             }
           } else {
             results.forEach((k, v) {
               if (v is String || k == null) {
-                col.add({'name': k, 'type':'string'});
+                col.add({'name': k, 'type': 'string'});
               } else if (v is num) {
-                col.add({'name': k, 'type':'number'});
+                col.add({'name': k, 'type': 'number'});
               } else if (v is bool) {
-                col.add({'name': k, 'type':'bool'});
+                col.add({'name': k, 'type': 'bool'});
               } else {
                 return;
               }
               row.add(v);
             });
-            response.updateStream([row], columns: col, streamStatus: StreamStatus.closed);
+            response.updateStream([row],
+                columns: col, streamStatus: StreamStatus.closed);
           }
         } else {
           onError(rslt['error']);
@@ -253,8 +258,10 @@ class DgApiNode extends SimpleNode {
       node = null;
     }
 
-    if (node != null && ((node["hasChildren"] == true) || (niagara && node["path"] == "/"))) {
-      provider.services[conn].getChildren(getChildrenCallback, rewritePath(rpath));
+    if (node != null &&
+        ((node["hasChildren"] == true) || (niagara && node["path"] == "/"))) {
+      provider.services[conn]
+          .getChildren(getChildrenCallback, rewritePath(rpath));
     } else {
       _childrenReady = true;
     }
@@ -335,16 +342,13 @@ class DgApiNode extends SimpleNode {
     if (node["icon"] is String) {
       var url = provider.services[conn].resolveIcon(node["icon"]);
       var uri = Uri.parse(url);
-      var hash = new MD5();
-      hash.add(UTF8.encode(uri.toString()));
-      var hashz = CryptoUtils.bytesToHex(hash.close());
-      var pn = "dgapi/${hashz}";
+      var hash = md5.convert(UTF8.encode(uri.toString())).toString();
+      var pn = "dgapi/${hash}";
       attributes[r"@icon"] = pn;
       provider.icons[pn] = new IconModel(provider.services[conn], pn, url);
     }
 
     String np = node["path"];
-    String rp = convertNiagaraToDsa(np);
 
     if (childrenNodes != null) {
       for (Map no in childrenNodes) {
@@ -356,7 +360,11 @@ class DgApiNode extends SimpleNode {
 
           name = n.replaceFirst(":", "%3A").replaceAll("/", "%2F");
         } else {
-          name = path.split("/").last.replaceAll("slot:", "config").replaceAll("history:", "history");
+          name = path
+              .split("/")
+              .last
+              .replaceAll("slot:", "config")
+              .replaceAll("history:", "history");
         }
 
         if (name.contains("+")) {
@@ -375,7 +383,6 @@ class DgApiNode extends SimpleNode {
             relp = "config";
           }
 
-
           if (relp.contains("|")) {
             relp = "__OR__" + relp.split("|").skip(1).join("|");
           }
@@ -390,7 +397,8 @@ class DgApiNode extends SimpleNode {
             name = "history";
           }
 
-          if (path.startsWith("history://") && name.startsWith("__SLASH____SLASH__")) {
+          if (path.startsWith("history://") &&
+              name.startsWith("__SLASH____SLASH__")) {
             name = name.substring(9 * 2);
           }
 
@@ -431,7 +439,8 @@ class DgApiNode extends SimpleNode {
     }
 
     if (node['hasHistory'] == true) {
-      children["getHistory"] = new SimpleNode(path + "/getHistory")..load(getHistorySpec);
+      children["getHistory"] = new SimpleNode(path + "/getHistory")
+        ..load(getHistorySpec);
       provider.services[conn].actionHints.add("${path}/getHistory");
       configs[r"$hasHistory"] = true;
     }
@@ -451,9 +460,11 @@ class DgApiNode extends SimpleNode {
           configs.addAll(getHistorySpec);
           listChangeController.add(r'$is');
         }
-      } else if (checkActionName == 'dbQuery') {
-      } else if (pnode['actions'] is List) {
-        Map action = pnode['actions'].firstWhere((action) => action['name'] == checkActionName, orElse:() => null);
+      } else if (checkActionName == 'dbQuery') {} else if (pnode['actions']
+          is List) {
+        Map action = pnode['actions'].firstWhere(
+            (action) => action['name'] == checkActionName,
+            orElse: () => null);
         if (action != null) {
           listReady = true;
           DgSimpleActionNode actionNode = new DgSimpleActionNode(action);
@@ -493,7 +504,8 @@ class DgSimpleActionNode extends SimpleNode {
       for (Map param in action['results']) {
         columns.add({'name': param['name'], 'type': param['type']});
       }
-      if (action["results"].length == 1 && action["results"].first["type"] == "table") {
+      if (action["results"].length == 1 &&
+          action["results"].first["type"] == "table") {
         configs[r"$result"] = "table";
       } else {
         configs[r"$result"] = "values";
@@ -533,51 +545,51 @@ class SimpleChildNode extends SimpleNode {
 }
 
 const Map<String, String> intervalMap = const {
-  "oneyear":"oneYear",
-  "threemonths":"threeMonths",
-  "onemonth":"oneMonth",
-  "oneweek":"oneWeek",
-  "oneday":"oneDay",
-  "twelvehours":"twelveHours",
-  "sixhours":"sixHours",
-  "fourours":"fourHours",
-  "threehours":"threeHours",
-  "twohours":"twoHours",
-  "onehour":"oneHour",
-  "thirtyminutes":"thirtyMinutes",
-  "twentyminutes":"twentyMinutes",
-  "fifteenminutes":"fifteenMinutes",
-  "tenminutes":"tenMinutes",
-  "fiveminutes":"fiveMinutes",
-  "oneminute":"oneMinute",
-  "thirtyseconds":"thirtySeconds",
-  "fifteenseconds":"fifteenSeconds",
-  "tenseconds":"tenSeconds",
-  "fiveseconds":"fiveSeconds",
-  "onesecond":"oneSecond",
-  "none":"none",
-  "1y":"oneYear",
-  "3n":"threeMonths",
-  "1n":"oneMonth",
-  "1w":"oneWeek",
-  "1d":"oneDay",
-  "12h":"twelveHours",
-  "6h":"sixHours",
-  "4h":"fourHours",
-  "3h":"threeHours",
-  "2h":"twoHours",
-  "1h":"oneHour",
-  "30m":"thirtyMinutes",
-  "20m":"twentyMinutes",
-  "15m":"fifteenMinutes",
-  "10m":"tenMinutes",
-  "5m":"fiveMinutes",
-  "1m":"oneMinute",
-  "20s":"thirtySeconds",
-  "15s":"fifteenSeconds",
-  "10s":"tenSeconds",
-  "5s":"fiveSeconds",
-  "1s":"oneSecond",
+  "oneyear": "oneYear",
+  "threemonths": "threeMonths",
+  "onemonth": "oneMonth",
+  "oneweek": "oneWeek",
+  "oneday": "oneDay",
+  "twelvehours": "twelveHours",
+  "sixhours": "sixHours",
+  "fourours": "fourHours",
+  "threehours": "threeHours",
+  "twohours": "twoHours",
+  "onehour": "oneHour",
+  "thirtyminutes": "thirtyMinutes",
+  "twentyminutes": "twentyMinutes",
+  "fifteenminutes": "fifteenMinutes",
+  "tenminutes": "tenMinutes",
+  "fiveminutes": "fiveMinutes",
+  "oneminute": "oneMinute",
+  "thirtyseconds": "thirtySeconds",
+  "fifteenseconds": "fifteenSeconds",
+  "tenseconds": "tenSeconds",
+  "fiveseconds": "fiveSeconds",
+  "onesecond": "oneSecond",
+  "none": "none",
+  "1y": "oneYear",
+  "3n": "threeMonths",
+  "1n": "oneMonth",
+  "1w": "oneWeek",
+  "1d": "oneDay",
+  "12h": "twelveHours",
+  "6h": "sixHours",
+  "4h": "fourHours",
+  "3h": "threeHours",
+  "2h": "twoHours",
+  "1h": "oneHour",
+  "30m": "thirtyMinutes",
+  "20m": "twentyMinutes",
+  "15m": "fifteenMinutes",
+  "10m": "tenMinutes",
+  "5m": "fiveMinutes",
+  "1m": "oneMinute",
+  "20s": "thirtySeconds",
+  "15s": "fifteenSeconds",
+  "10s": "tenSeconds",
+  "5s": "fiveSeconds",
+  "1s": "oneSecond",
 };
 
 String mapInterval(String input) {
@@ -590,7 +602,7 @@ String mapInterval(String input) {
 }
 
 final Map getHistorySpec = {
-  r"$is":"getHistory",
-  r"$invokable":"read",
+  r"$is": "getHistory",
+  r"$invokable": "read",
   r"$name": "Get History"
 };

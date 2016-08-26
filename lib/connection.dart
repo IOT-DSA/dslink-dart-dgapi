@@ -57,7 +57,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
       if (resp.statusCode == HttpStatus.UNAUTHORIZED && !isAuthRelated) {
         await login();
-        return await loadString(uri, post, contentType);
+        return await loadString(uri, post, contentType, isAuthRelated, retries + 1);
       }
 
       addCookie(resp.headers.value("set-cookie"));
@@ -67,9 +67,14 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       if (retries > 2) {
         rethrow;
       } else {
-        return new Future.delayed(const Duration(seconds: 1)).then((_) async {
-          return await loadString(uri, post, contentType, isAuthRelated, retries + 1);
-        });
+        await new Future.delayed(const Duration(seconds: 1));
+        return await loadString(
+          uri,
+          post,
+          contentType,
+          isAuthRelated,
+          retries + 1
+        );
       }
     }
   }
@@ -197,7 +202,12 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
         return false;
       }
 
-      sessionStr = await loadString(configUri.resolve("..").resolve(config["sessionUrl"]), null, null, true);
+      sessionStr = await loadString(
+        configUri.resolve("..").resolve(config["sessionUrl"]),
+        null,
+        null,
+        true
+      );
       niagara = false;
     }
 
