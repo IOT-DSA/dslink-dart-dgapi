@@ -449,7 +449,7 @@ class DGDataServiceAsync extends DGDataService {
   void startSendRequest() {
     if (_watchTimer == null) {
       _watchTimer = Scheduler.safeEvery(
-        const Duration(milliseconds: 250),
+        new Duration(milliseconds: globalPollInterval),
         subscribeWatch
       );
 
