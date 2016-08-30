@@ -63,7 +63,8 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       addCookie(resp.headers.value("set-cookie"));
       var data = await resp.transform(decoder).join();
       return data;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.warning("Failed to fetch ${uri.toString()}.", e, stack);
       if (retries > 2) {
         rethrow;
       } else {
