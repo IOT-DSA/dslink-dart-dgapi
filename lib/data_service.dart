@@ -269,7 +269,7 @@ class DGDataService {
 
     if (_watchTimer == null) {
       _watchTimer = Scheduler.safeEvery(
-        const Duration(milliseconds: 250),
+        new Duration(milliseconds: globalPollInterval),
         pollSubscription
       );
     }

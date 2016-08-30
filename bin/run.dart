@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:args/args.dart';
 import 'package:dslink/dslink.dart';
 
 import '../lib/dgapi.dart';
@@ -13,6 +14,18 @@ main(List<String> args) async {
   provider.nodes["/Add_Connection"] = new AddConnectionNode("/Add_Connection");
   root.addChild("Add_Connection", provider.nodes["/Add_Connection"]);
   link = new LinkProvider(args, "dgapi-", nodeProvider: provider, isResponder: true, autoInitialize: false);
+
+  var argp = new ArgParser();
+  argp.addOption(
+    "poll-interval",
+    defaultsTo: "250",
+    help: "Poll Interval in Milliseconds"
+  );
+
+  link.configure(argp: argp, optionsHandler: (opts) {
+    globalPollInterval = int.parse(opts["poll-interval"] == null ? 250 : opts["poll-interval"]);
+  });
+
   link.init();
 
   saveLink = () {

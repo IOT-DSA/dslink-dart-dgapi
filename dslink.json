@@ -23,6 +23,10 @@
     },
     "token": {
       "type": "string"
+    },
+    "pollInterval": {
+      "type": "number",
+      "default": 250
     }
   }
 }
