@@ -24,7 +24,7 @@
     "token": {
       "type": "string"
     },
-    "pollInterval": {
+    "poll-interval": {
       "type": "number",
       "default": 250
     }
