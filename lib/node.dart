@@ -79,7 +79,7 @@ class DgApiNode extends SimpleNode {
   }
 
   updateDataValue(Map m) {
-    if (m['error'] == null) {
+    if (m['error'] != null) {
       logger.warning("Error while updating ${path}: ${m['error']}");
       return;
     }

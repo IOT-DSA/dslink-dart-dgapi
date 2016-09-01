@@ -310,7 +310,7 @@ class DGDataService {
       Map m = {
         "method": "Subscribe",
         "name": subscriptionId,
-        "paths": toWatch
+        "paths": toWatch.toList()
       };
       toWatch = [];
       subscribeToken = new QueryToken(m, subscriptionCallback);
