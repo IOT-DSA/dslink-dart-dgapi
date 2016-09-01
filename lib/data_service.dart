@@ -201,6 +201,8 @@ class DGDataService {
     }
 
     void onLoadError(String err) {
+      logger.warning("Load error: ${err}");
+
       for (var group in waitingList) {
         group.callback({"error": err});
       }
@@ -217,6 +219,7 @@ class DGDataService {
       onLoadError(e.toString());
       return;
     }
+
     if (responseData == null || responseData.length != waitingList.length) {
       onLoadError("response length doesn't match request length");
       return;
@@ -346,11 +349,15 @@ class DGDataService {
       for (Map m in data["values"]) {
         String path = m["path"];
         if (path != null && watchList.containsKey(path)) {
-          watchList[path](m);
+          if (m["error"] is! String) {
+            watchList[path](m);
+          } else {
+            logger.warning("Error subscribing to ${path}: ${m['error']}");
+          }
         }
       }
     } else if (data['error'] is String && data['error'].startsWith('Unknown subscription')) {
-      print('Connection Lost, resend all subscription');
+      logger.info("Connection lost, resending subscriptions.");
       toWatch = this.watchList.keys.toList();
       prepareWatch();
     }
