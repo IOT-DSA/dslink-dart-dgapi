@@ -274,7 +274,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     for (var n in names) {
       var url = m[n][r"$$dgapi_url"];
       var username = m[n][r"$$dgapi_username"];
-      var password = m[n][r"$$dgapi_password"];
+      var password = SimpleNode.decryptString(m[n][r"$$dgapi_password"]);
 
       addConnection(n, url, username, password);
     }
@@ -306,7 +306,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       m[x] = {
         r"$$dgapi_url": c[r"$$dgapi_url"],
         r"$$dgapi_username": c[r"$$dgapi_username"],
-        r"$$dgapi_password": c[r"$$dgapi_password"]
+        r"$$dgapi_password": SimpleNode.encryptString(c[r"$$dgapi_password"])
       };
     }
 
