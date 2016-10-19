@@ -271,11 +271,18 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       it != "Add_Connection"
     ).toList();
     nx = names.length;
+    bool hasBrokenPassword = false;
     for (var n in names) {
       var url = m[n][r"$$dgapi_url"];
       var username = m[n][r"$$dgapi_username"];
-      var password = SimpleNode.decryptString(m[n][r"$$dgapi_password"]);
-
+      var raw_password = m[n][r"$$dgapi_password"];
+      String password;
+      if (raw_password is String) {
+        if (raw_password.length == 22) {
+          hasBrokenPassword = true;
+        }
+        password = SimpleNode.decryptString(raw_password);
+      }
       addConnection(n, url, username, password);
     }
 
@@ -286,6 +293,10 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       }
       return null;
     });
+    if (hasBrokenPassword) {
+      saveLink();
+    }
+
   }
 
   int ll = 0;

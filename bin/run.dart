@@ -26,11 +26,11 @@ main(List<String> args) async {
     globalPollInterval = int.parse(opts["poll-interval"] == null ? 250 : opts["poll-interval"]);
   });
 
-  link.init();
-
   saveLink = () {
     hasChanged = true;
   };
+
+  link.init();
 
   Scheduler.every(Interval.FIVE_SECONDS, () async {
     if (hasChanged) {
