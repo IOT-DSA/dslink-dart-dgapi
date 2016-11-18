@@ -335,7 +335,7 @@ class DgApiNode extends SimpleNode {
     if (node['unit'] is String) {
       attributes['@unit'] = node['unit'];
     }
-    if (node['precision'] is String) {
+    if (node['precision'] is int) {
       attributes['@precision'] = node['precision'];
     }
 
@@ -545,7 +545,7 @@ class SimpleChildNode extends SimpleNode {
     if (node['unit'] is String) {
       attributes['@unit'] = node['unit'];
     }
-    if (node['precision'] is String) {
+    if (node['precision'] is int) {
       attributes['@precision'] = node['precision'];
     }
 
