@@ -267,8 +267,22 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
   @override
   void init([Map m, Map profiles]) {
     if (m == null) return;
+    if (m[r'$$writeActions'] is String) {
+      String actions = m[r'$$writeActions'];
+      DgSimpleActionNode.writeActions = actions.split(',');
+      getNode('/Update_Write_Actions').configs[r"$params"] = [
+        {
+          "name": "actions",
+          "type": "string",
+          "editor": "textarea",
+          "description": "actions that needs write permission, comma seperated",
+          "placeholder": "",
+          "default": actions
+        }
+      ];
+    }
     var names = m.keys.where((it) => !it.startsWith(r"$") &&
-      it != "Add_Connection"
+      it != "Add_Connection" && it != 'Update_Write_Actions'
     ).toList();
     nx = names.length;
     bool hasBrokenPassword = false;
@@ -320,7 +334,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
         r"$$dgapi_password": SimpleNode.encryptString(c[r"$$dgapi_password"])
       };
     }
-
+    m[r"$$writeActions"] = DgSimpleActionNode.writeActions.join(',');
     return m;
   }
 

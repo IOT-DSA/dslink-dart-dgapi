@@ -489,13 +489,19 @@ class DgApiNode extends SimpleNode {
 }
 
 class DgSimpleActionNode extends SimpleNode {
+
+  static List<String> writeActions = [];
+
   DgSimpleActionNode(Map action) : super('/') {
     configs[r'$is'] = 'node';
-    configs[r'$invokable'] = 'read';
-    configs[r"$name"] = action["name"]
+
+    String name = action["name"]
         .replaceAll("slot:", "config")
         .replaceAll("+", " ")
         .replaceAll("history:", "history");
+    configs[r"$name"] = name;
+    configs[r'$invokable'] = writeActions.contains(name) ? 'write':'read';
+
     if (action['parameters'] is List) {
       Map params = {};
       for (Map param in action['parameters']) {
