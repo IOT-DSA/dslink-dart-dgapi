@@ -30,7 +30,7 @@ class DgApiNode extends SimpleNode {
 
   String rewritePath(String x) {
     var out = _rewritePath(x);
-    out = Uri.decodeComponent(out);
+    out = UriComponentDecoder.decode(out);
     if (const bool.fromEnvironment("debug.paths", defaultValue: false)) {
       print("${x} => ${out}");
     }
