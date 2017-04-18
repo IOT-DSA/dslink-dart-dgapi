@@ -143,9 +143,17 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
 
     IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password);
 
+    var nd = new DGNode('/$n', this);
+    nodes['/'].addChild(n, nd);
+
     int tryAgain = 0;
 
     void setup() {
+      var stub = nodes['/']?.getChild(n) as SimpleNode;
+      if (stub != null) {
+        stub.remove();
+      }
+
       services[n] = connection.service;
       SimpleNode node = new SimpleNode("/", this);
 
@@ -225,7 +233,6 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
     void makeTry() {
       retries++;
       connection.loginWithError().then((_) {
-        print("Connection to '${n}' succeeded.");
         logger.fine("Connection to '${n}' succeeded.");
         setup();
         if (tryAgain == 0) {
