@@ -139,14 +139,20 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
   }
 
   void addConnection(String name, String url, String username, String password) {
-    var n = name;
-
     IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password);
+
+    var nd = new DGNode('/$name', this);
+    nodes['/'].addChild(name, nd);
 
     int tryAgain = 0;
 
     void setup() {
-      services[n] = connection.service;
+      var stub = nodes['/']?.getChild(name) as SimpleNode;
+      if (stub != null) {
+        stub.remove();
+      }
+
+      services[name] = connection.service;
       SimpleNode node = new SimpleNode("/", this);
 
       node.load({
@@ -155,7 +161,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
         r"$$dgapi_password": password
       });
 
-      var dbQueryNode = new SimpleActionNode("/${n}/dbQuery", (Map<String, dynamic> params) {
+      var dbQueryNode = new SimpleActionNode("/$name/dbQuery", (Map<String, dynamic> params) {
         var r = new AsyncTableResult();
         var db = params["db"];
         var query = params["query"];
@@ -169,16 +175,16 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
         return r;
       }, this);
 
-      var conn = n;
+      var conn = name;
 
-      var deleteConnectionNode = new SimpleActionNode("/${conn}/Delete_Connection", (Map<String, dynamic> params) {
+      var deleteConnectionNode = new SimpleActionNode("/$conn/Delete_Connection", (Map<String, dynamic> params) {
         if (connection.service._watchTimer != null) {
           connection.service._watchTimer.dispose();
         }
 
-        removeNode("/${conn}");
+        removeNode("/$conn");
         nodes.keys.toList().forEach((path) {
-          if (path == "/${conn}" || path.startsWith("/${conn}/")) {
+          if (path == "/$conn" || path.startsWith("/$conn/")) {
             nodes.remove(path);
           }
         });
@@ -209,24 +215,23 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       });
 
       node.addChild("dbQuery", dbQueryNode);
-      nodes["/${n}/dbQuery"] = dbQueryNode;
+      nodes["/$name/dbQuery"] = dbQueryNode;
       node.addChild("Delete_Connection", deleteConnectionNode);
-      nodes["/${n}/Delete_Connection"] = deleteConnectionNode;
+      nodes["/$name/Delete_Connection"] = deleteConnectionNode;
 
       connection.service.listDatabases().then((dbs) {
         (dbQueryNode.configs[r"$params"] as List)[0]["type"] = buildEnumType(dbs);
         dbQueryNode.listChangeController.add(r"$params");
       });
 
-      nodes["/"].addChild(n, node);
+      nodes["/"].addChild(name, node);
     }
 
     var retries = 0;
     void makeTry() {
       retries++;
       connection.loginWithError().then((_) {
-        print("Connection to '${n}' succeeded.");
-        logger.fine("Connection to '${n}' succeeded.");
+        logger.fine("Connection to '$name' succeeded.");
         setup();
         if (tryAgain == 0) {
           ll++;
@@ -234,10 +239,10 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
         nx++;
       }).catchError((e) {
         if (retries < 5) {
-          print("Warning: Failed to connect for connection ${n}: ${e}");
+          print("Warning: Failed to connect for connection $name: $e");
         }
 
-        logger.fine("Warning: Failed to connect for connection ${n}: ${e}");
+        logger.fine("Warning: Failed to connect for connection $name: $e");
 
         if (tryAgain == 0) {
           ll++;
