@@ -1,14 +1,12 @@
 {
   "name": "dslink-dart-dgapi",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "DGAPI DSLink",
   "main": "bin/run.dart",
   "engines": {
-    "dart": ">=1.9.0"
+    "dart": ">=1.13.0"
   },
-  "getDependencies": [
-    "pub get"
-  ],
+  "getDependencies": [],
   "configs": {
     "broker": {
       "type": "url"
