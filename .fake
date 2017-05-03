@@ -6,3 +6,4 @@ One last bump to remove git dir from build
 And one more bump for packages dir
 async bump
 Fail test
+remove zip test
