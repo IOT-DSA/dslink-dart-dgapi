@@ -85,6 +85,9 @@ class DgApiNode extends SimpleNode {
     }
 
     updateValue(new ValueUpdate(m['value'], ts: m['lastUpdate']));
+    if (m.containsKey('formatted')) {
+      attributes['@formatted'] = m['formatted'];
+    }
     valueReady = true;
   }
 
