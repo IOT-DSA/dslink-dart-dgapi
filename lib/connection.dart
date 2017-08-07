@@ -149,10 +149,10 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       configStr = await loadString(configUri, null, null, true);
     } catch (e) {}
 
-    if (configStr.contains("<html>")) {
+    if (configStr.contains("<html>") || configStr.contains("<!DOCTYPE html>")) {
       String rootStr = await loadString(serverUri);
 
-      if (rootStr.contains("j_security_check")) {
+      if (rootStr.contains("j_security_check") || rootStr.contains("Eclypse")) {
         basicAuth = false;
         var result = await loadString(
             serverUri.resolve("j_security_check"),
