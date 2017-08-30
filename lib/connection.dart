@@ -60,7 +60,9 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
         return await loadString(uri, post, contentType, isAuthRelated, retries + 1);
       }
 
-      addCookie(resp.headers.value("set-cookie"));
+      if (resp.headers["set-cookie"] != null)
+        addCookie(resp.headers["set-cookie"].last);
+
       var data = await resp.transform(decoder).join();
       return data;
     } catch (e, stack) {
