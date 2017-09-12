@@ -60,10 +60,8 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
         return await loadString(uri, post, contentType, isAuthRelated, retries + 1);
       }
 
-      if (resp.headers["set-cookie"] != null) {
-        for (var cookie in resp.headers["set-cookie"]) {
-          addCookie(cookie);
-        }
+      if (resp.cookies.length > 0) {
+          serverCookies.addAll(resp.cookies);
       }
 
       var data = await resp.transform(decoder).join();
@@ -111,7 +109,8 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       return await loadBytes(uri, post, contentType);
     }
 
-    addCookie(resp.headers.value("set-cookie"));
+    serverCookies.addAll(resp.cookies);
+
     return resp.fold([], (a, b) {
       return a..addAll(b);
     });
@@ -124,20 +123,14 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       req.headers.add("Authorization", "Basic ${authString}");
     }
 
-    if (serverCookie != null) {
-      req.headers.add("cookie", serverCookie);
+    if (serverCookies != null) {
+      req.cookies.addAll(serverCookies);
     }
     req.headers.add("Accept-Charset", "utf-8");
     req.headers.add("Accept-Encoding", "gzip, deflate");
   }
 
-  String serverCookie;
-
-  void addCookie(String cookie) {
-    if (cookie != null) {
-      serverCookie = cookie.split(";").where((str) => !str.toLowerCase().contains("path=")).join(";");
-    }
-  }
+  var serverCookies = new List<Cookie>();
 
   Future loginWithError() async {
     var result = await login();
