@@ -60,7 +60,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
         return await loadString(uri, post, contentType, isAuthRelated, retries + 1);
       }
 
-      serverCookies.addAll(resp.cookies);
+      serverCookies = resp.cookies;
 
       var data = await resp.transform(decoder).join();
       return data;
@@ -107,7 +107,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       return await loadBytes(uri, post, contentType);
     }
 
-    serverCookies.addAll(resp.cookies);
+    serverCookies = resp.cookies;
 
     return resp.fold([], (a, b) {
       return a..addAll(b);
