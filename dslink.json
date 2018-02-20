@@ -1,6 +1,6 @@
 {
   "name": "dslink-dart-dgapi",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "DGAPI DSLink",
   "main": "bin/run.dart",
   "engines": {
@@ -23,6 +23,10 @@
       "type": "string"
     },
     "poll-interval": {
+      "type": "number",
+      "default": 250
+    },
+    "timeout": {
       "type": "number",
       "default": 250
     }

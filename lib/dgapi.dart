@@ -21,3 +21,4 @@ part "node.dart";
 part "data_service.dart";
 
 int globalPollInterval = 250;
+int globalTimeout = 5000;
