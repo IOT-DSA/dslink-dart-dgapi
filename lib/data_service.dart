@@ -508,6 +508,9 @@ class DGDataServiceAsync extends DGDataService {
         data = const JsonDecoder().convert(result);
         responseData = data["responses"];
       } catch (e) {
+        logger.warning("$e\nserver response: \n $result");
+        checkClearTimer();
+        _isPolling = false;
         return;
       }
 
