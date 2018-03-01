@@ -30,7 +30,9 @@ class DgApiNode extends SimpleNode {
 
   String rewritePath(String x) {
     var out = _rewritePath(x);
-    out = UriComponentDecoder.decode(out);
+    if (niagara) {
+      out = UriComponentDecoder.decode(out);
+    }
     if (const bool.fromEnvironment("debug.paths", defaultValue: false)) {
       print("${x} => ${out}");
     }
@@ -48,7 +50,7 @@ class DgApiNode extends SimpleNode {
       }
 
       if (x.contains("%2b")) {
-        return x.replaceAll("%2b", "+");
+        x = x.replaceAll("%2b", "+");
       }
 
       return x;
