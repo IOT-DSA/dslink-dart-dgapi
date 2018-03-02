@@ -55,7 +55,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
       HttpClientResponse resp = await req.close();
 
-      if (resp.statusCode == HttpStatus.UNAUTHORIZED && !isAuthRelated) {
+      if ((resp.statusCode == HttpStatus.UNAUTHORIZED || resp.statusCode == HttpStatus.NOT_ACCEPTABLE) && !isAuthRelated) {
         await login();
         return await loadString(uri, post, contentType, isAuthRelated, retries + 1);
       }
@@ -103,7 +103,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
     HttpClientResponse resp = await req.close();
 
-    if (resp.statusCode == HttpStatus.UNAUTHORIZED && !isAuthRelated) {
+    if ((resp.statusCode == HttpStatus.UNAUTHORIZED || resp.statusCode == HttpStatus.NOT_ACCEPTABLE) && !isAuthRelated) {
       await login();
       return await loadBytes(uri, post, contentType);
     }
