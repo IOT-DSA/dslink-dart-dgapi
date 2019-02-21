@@ -47,6 +47,8 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
 
       if (contentType != null) {
         req.headers.contentType = ContentType.parse(contentType);
+      } else if (post != null) {
+        req.headers.contentType = ContentType.parse('text/plain;charset=UTF-8');
       }
 
       if (post != null) {
@@ -66,7 +68,12 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
       var data = await resp.transform(decoder).join();
       return data;
     } catch (e, stack) {
-      logger.warning("Failed to fetch ${uri.toString()}.", e, stack);
+      if (logger.level <= Level.FINEST) {
+        logger.warning("Failed to fetch ${uri.toString()}.", e, stack);
+      } else {
+        logger.warning("Failed to fetch ${uri.toString()}.", e);
+      }
+
       if (retries > 2) {
         rethrow;
       } else {
