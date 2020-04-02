@@ -14,6 +14,10 @@ main(List<String> args) async {
 
   provider.nodes["/Add_Connection"] = new AddConnectionNode("/Add_Connection");
   root.addChild("Add_Connection", provider.nodes["/Add_Connection"]);
+
+  provider.nodes["/Clear_Disconnected"] = new RemoveDisconnectedConnsNode("/Clear_Disconnected");
+  root.addChild("Clear_Disconnected", provider.nodes["/Clear_Disconnected"]);
+
   provider.nodes["/Update_Write_Actions"] =
   new WriteActionListNode("/Update_Write_Actions");
   root.addChild(
@@ -233,6 +237,27 @@ class WriteActionListNode extends SimpleNode {
 
       hasChanged = true;
     }
+    return {};
+  }
+}
+
+class RemoveDisconnectedConnsNode extends SimpleNode {
+  RemoveDisconnectedConnsNode(String path) : super(path) {
+    load({
+      r"$name": "Remove Disconnected Connection",
+      r"$invokable": "config"
+    });
+  }
+  @override
+  onInvoke(Map<String, dynamic> params) async {
+    var keys = this.parent.children.keys.toList();
+    for (var name in keys) {
+      var node = parent.children[name];
+      if (node.disconnected != null) {
+        (this.provider as DgApiNodeProvider).removeConnection(name);
+      }
+    };
+    saveLink();
     return {};
   }
 }

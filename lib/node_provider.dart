@@ -137,6 +137,21 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       nodes.remove(node.path);
     }
   }
+  void removeConnection(String conn) {
+    var service = services[conn];
+    if (service != null && service._watchTimer != null) {
+      service._watchTimer.dispose();
+    }
+    services.remove(conn);
+
+    removeNode("/$conn");
+    root.listChangeController.add(conn);
+    nodes.keys.toList().forEach((path) {
+      if (path == "/$conn" || path.startsWith("/$conn/")) {
+        nodes.remove(path);
+      }
+    });
+  }
 
   void addConnection(String name, String url, String username, String password) {
     IOldApiConnection connection = new OldApiBaseAuthConnection(url, username, password);
@@ -178,16 +193,7 @@ class DgApiNodeProvider extends SimpleNodeProvider implements SerializableNodePr
       var conn = name;
 
       var deleteConnectionNode = new SimpleActionNode("/$conn/Delete_Connection", (Map<String, dynamic> params) {
-        if (connection.service._watchTimer != null) {
-          connection.service._watchTimer.dispose();
-        }
-
-        removeNode("/$conn");
-        nodes.keys.toList().forEach((path) {
-          if (path == "/$conn" || path.startsWith("/$conn/")) {
-            nodes.remove(path);
-          }
-        });
+        removeConnection(conn);
         saveLink();
       });
 
