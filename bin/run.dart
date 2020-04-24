@@ -33,10 +33,17 @@ main(List<String> args) async {
       defaultsTo: "250",
       help: "Poll Interval in Milliseconds"
   );
+  argp.addOption(
+      "timeout",
+      defaultsTo: "250",
+      help: "Poll Timeout in Milliseconds"
+  );
 
   link.configure(argp: argp, optionsHandler: (opts) {
     globalPollInterval =
         int.parse(opts["poll-interval"] == null ? 250 : opts["poll-interval"]);
+    globalTimeout =
+        int.parse(opts["timeout"] == null ? 5000 : opts["timeout"]);
   });
 
   saveLink = () {
@@ -86,7 +93,7 @@ Future<String> detectAndCorrectHost(String host) async {
   }
 
   http.Response response = await httpClient.get(host).timeout(
-      const Duration(seconds: 5));
+      new Duration(milliseconds: globalTimeout));
 
   var server = response.headers["server"];
 
@@ -102,7 +109,7 @@ Future<String> detectAndCorrectHost(String host) async {
       u = u.resolve(response.headers["location"]);
       response = await httpClient.get(u.toString(), headers: {
         "x-niagara": "true" // Use Proxy on WKWebView
-      }).timeout(const Duration(seconds: 5));
+      }).timeout(new Duration(milliseconds: globalTimeout));
     }
 
     if (response.headers.containsKey("x-location")) {
@@ -110,7 +117,7 @@ Future<String> detectAndCorrectHost(String host) async {
       u = u.resolve(response.headers["x-location"]);
       response = await httpClient.get(u.toString(), headers: {
         "x-niagara": "true" // Use Proxy on WKWebView
-      }).timeout(const Duration(seconds: 5));
+      }).timeout(new Duration(milliseconds: globalTimeout));
     }
 
     if (response.body.contains("ENVYSION") ||

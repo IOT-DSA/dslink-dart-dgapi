@@ -25,6 +25,10 @@
     "poll-interval": {
       "type": "number",
       "default": 250
+    },
+    "timeout": {
+      "type": "number",
+      "default": 250
     }
   }
 }
