@@ -85,8 +85,20 @@ class DgApiNode extends SimpleNode {
       logger.warning("Error while updating ${path}: ${m['error']}");
       return;
     }
+    var value = m['value'];
+    switch(value) {
+      case "\u001BNaN":
+        value = double.NAN;
+        break;
+      case "\u001B-Infinity":
+        value = -double.INFINITY;
+        break;
+      case "\u001BInfinity":
+        value = double.INFINITY;
+        break;
+   }
 
-    updateValue(new ValueUpdate(m['value'], ts: m['lastUpdate']));
+    updateValue(new ValueUpdate(value, ts: m['lastUpdate']));
     if (m.containsKey('formatted')) {
       attributes['@formatted'] = m['formatted'];
       updateList('@formatted');
