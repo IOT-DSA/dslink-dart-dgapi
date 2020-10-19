@@ -36,7 +36,7 @@ main(List<String> args) async {
 
   link.configure(argp: argp, optionsHandler: (opts) {
     globalPollInterval =
-        int.parse(opts["poll-interval"] == null ? 250 : opts["poll-interval"]);
+        int.parse(opts["poll-interval"] == null ? 1000 : opts["poll-interval"]);
   });
 
   saveLink = () {

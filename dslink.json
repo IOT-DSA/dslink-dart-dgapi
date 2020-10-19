@@ -24,7 +24,7 @@
     },
     "poll-interval": {
       "type": "number",
-      "default": 250
+      "default": 1000
     }
   }
 }

@@ -126,6 +126,7 @@ class DGDataService {
   }
 
   void sendRequest(QueryToken token) {
+    print('sendRequest');
     if (pendingReqList == null) {
       pendingReqList = [];
       startSendRequest();
@@ -296,10 +297,7 @@ class DGDataService {
       toNotWatch.add(path);
     }
 
-    if (watchList.isEmpty && _watchTimer != null) {
-      _watchTimer.dispose();
-      _watchTimer = null;
-    }
+    this.checkClearTimer();
   }
 
   List<String> toWatch = [];
@@ -437,6 +435,16 @@ class DGDataService {
     sendRequest(token);
     return token;
   }
+
+  bool needTimer(){
+    return !watchList.isEmpty;
+  }
+  void checkClearTimer() {
+    if (_watchTimer != null && !needTimer()) {
+      _watchTimer.dispose();
+      _watchTimer = null;
+    }
+  }
 }
 
 class DGDataServiceAsync extends DGDataService {
@@ -558,12 +566,5 @@ class DGDataServiceAsync extends DGDataService {
       checkClearTimer();
       _isPolling = false;
     });
-  }
-
-  void checkClearTimer() {
-    if (_watchTimer != null && !needTimer()) {
-      _watchTimer.dispose();
-      _watchTimer = null;
-    }
   }
 }

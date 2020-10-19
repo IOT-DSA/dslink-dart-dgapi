@@ -20,4 +20,4 @@ part "node_provider.dart";
 part "node.dart";
 part "data_service.dart";
 
-int globalPollInterval = 250;
+int globalPollInterval = 1000;

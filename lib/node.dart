@@ -86,17 +86,19 @@ class DgApiNode extends SimpleNode {
       return;
     }
     var value = m['value'];
-    switch(value) {
-      case "\u001BNaN":
-        value = double.NAN;
-        break;
-      case "\u001B-Infinity":
-        value = -double.INFINITY;
-        break;
-      case "\u001BInfinity":
-        value = double.INFINITY;
-        break;
-   }
+    if (value is String && (value as String).startsWith('\u001B')) {
+      switch(value) {
+        case "\u001BNaN":
+          value = double.NAN;
+          break;
+        case "\u001B-Infinity":
+          value = -double.INFINITY;
+          break;
+        case "\u001BInfinity":
+          value = double.INFINITY;
+          break;
+      }
+    }
 
     updateValue(new ValueUpdate(value, ts: m['lastUpdate']));
     if (m.containsKey('formatted')) {

@@ -17,6 +17,15 @@ HttpClient loader = () {
   return client;
 }();
 
+Future timeoutRequest(HttpClientRequest req) async {
+  var f0 = req.close().timeout(new Duration(seconds: 60));
+  var f1 = new Future.delayed(new Duration(seconds: 70));
+  var resp =  await Future.any([f1,f0]);
+  if (resp is HttpClientResponse) {
+    return resp;
+  }
+ throw new Exception('http request timeout');
+}
 class OldApiBaseAuthConnection implements IOldApiConnection {
 
   final String serverUrl;
@@ -55,7 +64,7 @@ class OldApiBaseAuthConnection implements IOldApiConnection {
         req.add(UTF8.encode(post));
       }
 
-      HttpClientResponse resp = await req.close();
+      HttpClientResponse resp = await timeoutRequest(req);
 
       if ((resp.statusCode == HttpStatus.UNAUTHORIZED || resp.statusCode == HttpStatus.NOT_ACCEPTABLE) && !isAuthRelated) {
         await login();
