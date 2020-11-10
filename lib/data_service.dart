@@ -126,7 +126,7 @@ class DGDataService {
   }
 
   void sendRequest(QueryToken token) {
-    print('sendRequest');
+
     if (pendingReqList == null) {
       pendingReqList = [];
       startSendRequest();
