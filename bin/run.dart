@@ -30,7 +30,7 @@ main(List<String> args) async {
   var argp = new ArgParser();
   argp.addOption(
       "poll-interval",
-      defaultsTo: "250",
+      defaultsTo: "1000",
       help: "Poll Interval in Milliseconds"
   );
 

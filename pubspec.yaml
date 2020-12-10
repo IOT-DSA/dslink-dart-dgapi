@@ -1,5 +1,5 @@
 name: dslink_dgapi
-version: 1.0.6
+version: 1.0.7
 description: DSLink for compatibility with the old DGAPI.
 environment:
   sdk: ">=1.0.0 <2.0.0"
