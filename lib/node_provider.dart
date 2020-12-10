@@ -19,8 +19,11 @@ String convertDsaToNiagara(String input) {
       var p = input.substring("/history".length);
       if (p.startsWith("/_default")) {
         p = p.substring("/_default".length);
+        p = "history:${p}".replaceAll("__SLASH__", "/");
+      } else {
+        p = "history:/${p}".replaceAll("__SLASH__", "/");
       }
-      p = "history:${p}".replaceAll("__SLASH__", "/");
+
       if (p.startsWith("history:__SLASH__")) {
         p = "history:/" + p.substring(17);
       }
