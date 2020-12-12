@@ -403,7 +403,11 @@ class DgApiNode extends SimpleNode {
           String cp = no["path"];
           var relp = cp.replaceAll(np + "/", "");
           if (relp.startsWith("/")) {
-            relp = relp.substring(1);
+            if (np.startsWith('history://')) {
+              // do not change history group node path
+            } else {
+              relp = relp.substring(1);
+            }
           }
           relp = relp.replaceAll("/", "__SLASH__");
           relp = relp.replaceAll("history:", "");
@@ -430,7 +434,7 @@ class DgApiNode extends SimpleNode {
             name = name.substring(9 * 2);
           }
 
-          if (path.startsWith("history:/") && name.startsWith("__SLASH__")) {
+          if (path.startsWith("history:/") && !path.startsWith("history://") && name.startsWith("__SLASH__")) {
             name = name.substring(9);
           }
 
