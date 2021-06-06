@@ -20,8 +20,10 @@ String convertDsaToNiagara(String input) {
       if (p.startsWith("/_default")) {
         p = p.substring("/_default".length);
         p = "history:${p}".replaceAll("__SLASH__", "/");
-      } else {
+      } else if (p.startsWith("/HistoryGroup")) {
         p = "history:/${p}".replaceAll("__SLASH__", "/");
+      } else {
+        p = "history:${p}".replaceAll("__SLASH__", "/");
       }
 
       if (p.startsWith("history:__SLASH__")) {

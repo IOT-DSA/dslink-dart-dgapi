@@ -429,22 +429,23 @@ class DgApiNode extends SimpleNode {
             name = "history";
           }
 
-          if (path.startsWith("history://") &&
-              name.startsWith("__SLASH____SLASH__")) {
-            name = name.substring(9 * 2);
-          }
-
-          if (path.startsWith("history:/") && !path.startsWith("history://") && name.startsWith("__SLASH__")) {
-            name = name.substring(9);
-          }
-
-          if (path.startsWith("slot:/") && name.startsWith("__SLASH__")) {
-            name = name.substring(9);
-          }
-
           if (no["path"] != null && no["path"] == "history:///") {
             name = "_default";
+          } else {
+            if (path.startsWith("history://") &&
+                name.startsWith("__SLASH____SLASH__")) {
+              name = name.substring(9 * 2);
+            }
+
+            if (path.startsWith("history:/") && !path.startsWith("history://") && name.startsWith("__SLASH__")) {
+              name = name.substring(9);
+            }
+
+            if (path.startsWith("slot:/") && name.startsWith("__SLASH__")) {
+              name = name.substring(9);
+            }
           }
+
 
           if (path.startsWith("slot:") && np.startsWith("history:")) {
             name = "__OR__${no['path']}";
