@@ -564,14 +564,17 @@ class SimpleChildNode extends SimpleNode {
     if (node['type'] is String) {
       configs[r'$type'] = node['type'];
     }
-
+    if (node['enum'] is String) {
+      if (node['type'] == 'bool') {
+        configs[r'$type'] = 'bool[${node['enum']}]';
+      } else {
+        configs[r'$type'] = 'enum[${node['enum']}]';
+      }
+    }
     configs[r"$name"] = node["name"]
         .replaceAll("slot:", "config")
         .replaceAll("+", " ")
         .replaceAll("history:", "history");
-    if (node['enum'] is String) {
-      configs[r'$type'] = 'enum[${node['enum']}]';
-    }
 
     if (node['unit'] is String) {
       attributes['@unit'] = node['unit'];
